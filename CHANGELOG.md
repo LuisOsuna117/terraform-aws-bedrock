@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 1.0.0 (2026-03-09)
+
+### 🚀 Features
+
+* initial terraform-aws-bedrock module scaffold ([b814b2f](https://github.com/LuisOsuna117/terraform-aws-bedrock/commit/b814b2ffdd75fd5e41fd244f960928f297edd201))
+
 ## [0.4.2](https://github.com/LuisOsuna117/terraform-aws-agentcore/compare/v0.4.1...v0.4.2) (2026-02-28)
 
 ### 📖 Documentation
