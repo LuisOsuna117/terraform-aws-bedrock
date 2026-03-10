@@ -123,7 +123,7 @@ module "knowledge_base" {
   vector_embedding_dimensions = try(var.knowledge_base_config.vector_embedding_dimensions, null)
   vector_embedding_data_type  = try(var.knowledge_base_config.vector_embedding_data_type, null)
   supplemental_s3_uri         = try(var.knowledge_base_config.supplemental_s3_uri, null)
-  storage_type                = try(var.knowledge_base_config.storage_type, "OPENSEARCH_SERVERLESS")
+  storage_type                = try(var.knowledge_base_config.storage_type, "S3_VECTORS")
   opensearch_serverless       = try(var.knowledge_base_config.opensearch_serverless, {})
   opensearch_managed_cluster  = try(var.knowledge_base_config.opensearch_managed_cluster, null)
   s3_vectors                  = try(var.knowledge_base_config.s3_vectors, null)

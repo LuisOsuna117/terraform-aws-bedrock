@@ -67,9 +67,9 @@ variable "supplemental_s3_uri" {
 }
 
 variable "storage_type" {
-  description = "Vector storage backend. One of: OPENSEARCH_SERVERLESS (default), OPENSEARCH_MANAGED_CLUSTER, S3_VECTORS, RDS."
+  description = "Vector storage backend. One of: S3_VECTORS (default), OPENSEARCH_SERVERLESS, OPENSEARCH_MANAGED_CLUSTER, RDS."
   type        = string
-  default     = "OPENSEARCH_SERVERLESS"
+  default     = "S3_VECTORS"
 
   validation {
     condition     = contains(["OPENSEARCH_SERVERLESS", "OPENSEARCH_MANAGED_CLUSTER", "S3_VECTORS", "RDS"], var.storage_type)

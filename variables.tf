@@ -35,7 +35,7 @@ variable "knowledge_base_config" {
     vector_embedding_dimensions = optional(number)
     vector_embedding_data_type  = optional(string)
     supplemental_s3_uri         = optional(string)
-    storage_type                = optional(string, "OPENSEARCH_SERVERLESS")
+    storage_type                = optional(string, "S3_VECTORS")
 
     # Auto-created when storage_type = OPENSEARCH_SERVERLESS
     opensearch_serverless = optional(object({
