@@ -13,24 +13,9 @@ output "knowledge_base_name" {
   value       = var.create_knowledge_base ? module.knowledge_base[0].name : null
 }
 
-output "prompt_id" {
-  description = "Prompt ID. Null when create_prompt_management = false."
-  value       = var.create_prompt_management ? module.prompt_management[0].id : null
-}
-
-output "prompt_arn" {
-  description = "Prompt ARN. Null when create_prompt_management = false."
-  value       = var.create_prompt_management ? module.prompt_management[0].arn : null
-}
-
-output "prompt_name" {
-  description = "Prompt name. Null when create_prompt_management = false."
-  value       = var.create_prompt_management ? module.prompt_management[0].name : null
-}
-
-output "prompt_version" {
-  description = "Prompt version (DRAFT on create). Null when create_prompt_management = false."
-  value       = var.create_prompt_management ? module.prompt_management[0].version : null
+output "prompts" {
+  description = "Map of logical key → prompt attributes (id, arn, name, version, created_at, updated_at). Empty map when create_prompt_management = false."
+  value       = var.create_prompt_management ? module.prompt_management[0].prompts : {}
 }
 
 output "prompt_bridge_prompt_id" {
@@ -75,4 +60,19 @@ output "guardrail_version" {
 output "guardrail_status" {
   description = "Guardrail status. Null when create_guardrail = false."
   value       = var.create_guardrail ? module.guardrail[0].status : null
+}
+
+output "agent_id" {
+  description = "Agent ID. Null when create_agent = false."
+  value       = var.create_agent ? module.agent[0].agent_id : null
+}
+
+output "agent_arn" {
+  description = "Agent ARN. Null when create_agent = false."
+  value       = var.create_agent ? module.agent[0].agent_arn : null
+}
+
+output "agent_aliases" {
+  description = "Map of alias key → alias attributes (agent_alias_id, agent_alias_arn). Empty map when create_agent = false."
+  value       = var.create_agent ? module.agent[0].aliases : {}
 }

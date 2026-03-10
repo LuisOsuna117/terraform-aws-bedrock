@@ -75,43 +75,46 @@ variable "create_prompt_management" {
 variable "prompt_management_config" {
   description = "Configuration object for the prompt management module. Required when create_prompt_management = true."
   type = object({
-    name                        = optional(string)
-    description                 = optional(string)
-    default_variant             = optional(string)
-    customer_encryption_key_arn = optional(string)
-    region                      = optional(string)
-    tags                        = optional(map(string), {})
-    variants = optional(list(object({
-      name                            = string
-      template_type                   = string
-      model_id                        = optional(string)
-      additional_model_request_fields = optional(map(any))
-      metadata                        = optional(map(string))
-      gen_ai_agent_identifier         = optional(string)
-      inference_text = optional(object({
-        max_tokens     = optional(number)
-        stop_sequences = optional(list(string))
-        temperature    = optional(number)
-        top_p          = optional(number)
-      }))
-      text_template = optional(object({
-        text             = string
-        input_variables  = optional(list(string), [])
-        cache_point_type = optional(string)
-      }))
-      chat_template = optional(object({
-        input_variables = optional(list(string), [])
-        messages = optional(list(object({
-          role             = string
-          text             = optional(string)
+    tags = optional(map(string), {})
+    prompts = optional(map(object({
+      name                        = string
+      description                 = optional(string)
+      default_variant             = optional(string)
+      customer_encryption_key_arn = optional(string)
+      region                      = optional(string)
+      tags                        = optional(map(string), {})
+      variants = optional(list(object({
+        name                            = string
+        template_type                   = string
+        model_id                        = optional(string)
+        additional_model_request_fields = optional(map(any))
+        metadata                        = optional(map(string))
+        gen_ai_agent_identifier         = optional(string)
+        inference_text = optional(object({
+          max_tokens     = optional(number)
+          stop_sequences = optional(list(string))
+          temperature    = optional(number)
+          top_p          = optional(number)
+        }))
+        text_template = optional(object({
+          text             = string
+          input_variables  = optional(list(string), [])
           cache_point_type = optional(string)
-        })), [])
-        system_prompts = optional(list(object({
-          text             = optional(string)
-          cache_point_type = optional(string)
-        })), [])
-      }))
-    })), [])
+        }))
+        chat_template = optional(object({
+          input_variables = optional(list(string), [])
+          messages = optional(list(object({
+            role             = string
+            text             = optional(string)
+            cache_point_type = optional(string)
+          })), [])
+          system_prompts = optional(list(object({
+            text             = optional(string)
+            cache_point_type = optional(string)
+          })), [])
+        }))
+      })), [])
+    })), {})
   })
   default = null
 }
@@ -128,6 +131,7 @@ variable "prompt_bridge_config" {
     existing_prompt_arn = optional(string)
     existing_prompt_id  = optional(string)
     prompt_version      = optional(string)
+    prompt_key          = optional(string)
     env_var_names = optional(object({
       prompt_id      = optional(string, "BEDROCK_PROMPT_ID")
       prompt_arn     = optional(string, "BEDROCK_PROMPT_ARN")
@@ -139,6 +143,12 @@ variable "prompt_bridge_config" {
 
 variable "create_guardrail" {
   description = "When true, creates an Amazon Bedrock guardrail using modules/guardrail."
+  type        = bool
+  default     = false
+}
+
+variable "create_agent" {
+  description = "When true, creates a Bedrock agent and its child resources using modules/agent."
   type        = bool
   default     = false
 }
@@ -225,6 +235,85 @@ variable "guardrail_config" {
         text           = string
       })), [])
     }))
+  })
+  default = null
+}
+
+variable "agent_config" {
+  description = "Configuration object for the agent module. Required when create_agent = true."
+  type = object({
+    name                        = optional(string)
+    role_arn                    = string
+    foundation_model            = string
+    instruction                 = optional(string)
+    description                 = optional(string)
+    idle_session_ttl_in_seconds = optional(number, 600)
+    agent_collaboration         = optional(string, "DISABLED")
+    customer_encryption_key_arn = optional(string)
+    prepare_agent               = optional(bool, true)
+    skip_resource_in_use_check  = optional(bool, false)
+    region                      = optional(string)
+    tags                        = optional(map(string), {})
+    guardrail_id                = optional(string)
+    guardrail_version           = optional(string, "DRAFT")
+
+    memory_configuration = optional(object({
+      enabled_memory_types = list(string)
+      storage_days         = optional(number)
+      max_recent_sessions  = optional(number)
+    }))
+
+    action_groups = optional(map(object({
+      name                          = optional(string)
+      description                   = optional(string)
+      action_group_state            = optional(string, "ENABLED")
+      parent_action_group_signature = optional(string)
+      lambda_arn                    = optional(string)
+      custom_control                = optional(string)
+      api_schema_payload            = optional(string)
+      api_schema_s3_bucket          = optional(string)
+      api_schema_s3_key             = optional(string)
+      prepare_agent                 = optional(bool, true)
+      skip_resource_in_use_check    = optional(bool, true)
+      region                        = optional(string)
+      function_schema = optional(object({
+        functions = optional(list(object({
+          name        = string
+          description = optional(string)
+          parameters = optional(list(object({
+            name        = string
+            type        = string
+            description = optional(string)
+            required    = optional(bool)
+          })), [])
+        })), [])
+      }))
+    })), {})
+
+    knowledge_base_associations = optional(map(object({
+      knowledge_base_id    = string
+      description          = string
+      knowledge_base_state = optional(string, "ENABLED")
+      region               = optional(string)
+    })), {})
+
+    aliases = optional(map(object({
+      name                   = optional(string)
+      description            = optional(string)
+      agent_version          = optional(string)
+      provisioned_throughput = optional(string)
+      region                 = optional(string)
+      tags                   = optional(map(string), {})
+    })), {})
+
+    collaborators = optional(map(object({
+      name                       = optional(string)
+      alias_arn                  = string
+      collaboration_instruction  = string
+      relay_conversation_history = optional(string)
+      prepare_agent              = optional(bool, true)
+      region                     = optional(string)
+    })), {})
   })
   default = null
 }

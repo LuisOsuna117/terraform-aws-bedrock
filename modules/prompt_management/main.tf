@@ -1,13 +1,15 @@
 resource "aws_bedrockagent_prompt" "this" {
-  name                        = var.name
-  description                 = var.description
-  default_variant             = var.default_variant
-  customer_encryption_key_arn = var.customer_encryption_key_arn
-  region                      = var.region
-  tags                        = var.tags
+  for_each = var.prompts
+
+  name                        = each.value.name
+  description                 = try(each.value.description, null)
+  default_variant             = try(each.value.default_variant, null)
+  customer_encryption_key_arn = try(each.value.customer_encryption_key_arn, null)
+  region                      = try(each.value.region, null)
+  tags                        = merge(var.tags, try(each.value.tags, {}))
 
   dynamic "variant" {
-    for_each = var.variants
+    for_each = try(each.value.variants, [])
     content {
       name                            = variant.value.name
       model_id                        = try(variant.value.model_id, null)

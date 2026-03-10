@@ -22,18 +22,6 @@ variable "prompt_description" {
   default     = "Prompt management example with multiple variants."
 }
 
-variable "default_variant" {
-  description = "Default text variant name."
-  type        = string
-  default     = "default"
-}
-
-variable "chat_variant_name" {
-  description = "Chat variant name."
-  type        = string
-  default     = "chat-default"
-}
-
 variable "model_id" {
   description = "Foundation model ID used by prompt variants."
   type        = string

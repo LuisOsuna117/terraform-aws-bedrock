@@ -8,23 +8,42 @@ locals {
   )
 
   knowledge_base_name = coalesce(try(var.knowledge_base_config.name, null), var.name)
-  prompt_name         = coalesce(try(var.prompt_management_config.name, null), "${var.name}-prompt")
   guardrail_name      = coalesce(try(var.guardrail_config.name, null), var.name)
+  agent_name          = coalesce(try(var.agent_config.name, null), var.name)
 
-  prompt_bridge_prompt_arn = coalesce(
-    try(var.prompt_bridge_config.existing_prompt_arn, null),
-    var.create_prompt_management ? module.prompt_management[0].arn : null,
+  # Resolve the target prompt from the managed module for the bridge.
+  # Use prompt_bridge_config.prompt_key when multiple prompts are present;
+  # otherwise fall back to the first entry in the map.
+  _bridge_prompt_key = try(var.prompt_bridge_config.prompt_key, null)
+  _bridge_managed_prompt = var.create_prompt_management ? (
+    local._bridge_prompt_key != null
+    ? module.prompt_management[0].prompts[local._bridge_prompt_key]
+    : values(module.prompt_management[0].prompts)[0]
+  ) : null
+
+  prompt_bridge_prompt_arn = (
+    try(var.prompt_bridge_config.existing_prompt_arn, null) != null
+    ? var.prompt_bridge_config.existing_prompt_arn
+    : try(local._bridge_managed_prompt.arn, null)
   )
 
-  prompt_bridge_prompt_id = coalesce(
-    try(var.prompt_bridge_config.existing_prompt_id, null),
-    var.create_prompt_management ? module.prompt_management[0].id : null,
+  prompt_bridge_prompt_id = (
+    try(var.prompt_bridge_config.existing_prompt_id, null) != null
+    ? var.prompt_bridge_config.existing_prompt_id
+    : try(local._bridge_managed_prompt.id, null)
   )
 
   prompt_bridge_prompt_version = coalesce(
     try(var.prompt_bridge_config.prompt_version, null),
-    var.create_prompt_management ? module.prompt_management[0].version : null,
+    try(local._bridge_managed_prompt.version, null),
     "DRAFT",
+  )
+
+  # Auto-wire the sibling guardrail module's ID to the agent unless explicitly overridden.
+  agent_guardrail_id = (
+    try(var.agent_config.guardrail_id, null) != null
+    ? var.agent_config.guardrail_id
+    : var.create_guardrail ? module.guardrail[0].guardrail_id : null
   )
 }
 
@@ -70,6 +89,21 @@ resource "terraform_data" "validations" {
     precondition {
       condition     = !var.create_guardrail || try(trimspace(var.guardrail_config.blocked_outputs_messaging) != "", false)
       error_message = "guardrail_config.blocked_outputs_messaging must be set when create_guardrail = true."
+    }
+
+    precondition {
+      condition     = !var.create_agent || var.agent_config != null
+      error_message = "agent_config must be provided when create_agent = true."
+    }
+
+    precondition {
+      condition     = !var.create_agent || try(trimspace(var.agent_config.role_arn) != "", false)
+      error_message = "agent_config.role_arn must be set when create_agent = true."
+    }
+
+    precondition {
+      condition     = !var.create_agent || try(trimspace(var.agent_config.foundation_model) != "", false)
+      error_message = "agent_config.foundation_model must be set when create_agent = true."
     }
   }
 }
@@ -120,13 +154,8 @@ module "prompt_management" {
   count  = var.create_prompt_management ? 1 : 0
   source = "./modules/prompt_management"
 
-  name                        = local.prompt_name
-  description                 = try(var.prompt_management_config.description, null)
-  default_variant             = try(var.prompt_management_config.default_variant, null)
-  customer_encryption_key_arn = try(var.prompt_management_config.customer_encryption_key_arn, null)
-  region                      = try(var.prompt_management_config.region, null)
-  tags                        = merge(local.common_tags, try(var.prompt_management_config.tags, {}))
-  variants                    = try(var.prompt_management_config.variants, [])
+  tags    = merge(local.common_tags, try(var.prompt_management_config.tags, {}))
+  prompts = try(var.prompt_management_config.prompts, {})
 
   depends_on = [terraform_data.validations]
 }
@@ -149,6 +178,36 @@ module "guardrail" {
   sensitive_information_policy_config = try(var.guardrail_config.sensitive_information_policy_config, null)
   topic_policy_config                 = try(var.guardrail_config.topic_policy_config, null)
   word_policy_config                  = try(var.guardrail_config.word_policy_config, null)
+
+  depends_on = [terraform_data.validations]
+}
+
+module "agent" {
+  count  = var.create_agent ? 1 : 0
+  source = "./modules/agent"
+
+  name             = local.agent_name
+  role_arn         = var.agent_config.role_arn
+  foundation_model = var.agent_config.foundation_model
+
+  instruction                 = try(var.agent_config.instruction, null)
+  description                 = try(var.agent_config.description, null)
+  idle_session_ttl_in_seconds = try(var.agent_config.idle_session_ttl_in_seconds, 600)
+  agent_collaboration         = try(var.agent_config.agent_collaboration, "DISABLED")
+  customer_encryption_key_arn = try(var.agent_config.customer_encryption_key_arn, null)
+  prepare_agent               = try(var.agent_config.prepare_agent, true)
+  skip_resource_in_use_check  = try(var.agent_config.skip_resource_in_use_check, false)
+  region                      = try(var.agent_config.region, null)
+  tags                        = merge(local.common_tags, try(var.agent_config.tags, {}))
+
+  guardrail_id      = local.agent_guardrail_id
+  guardrail_version = try(var.agent_config.guardrail_version, "DRAFT")
+
+  memory_configuration        = try(var.agent_config.memory_configuration, null)
+  action_groups               = try(var.agent_config.action_groups, {})
+  knowledge_base_associations = try(var.agent_config.knowledge_base_associations, {})
+  aliases                     = try(var.agent_config.aliases, {})
+  collaborators               = try(var.agent_config.collaborators, {})
 
   depends_on = [terraform_data.validations]
 }
