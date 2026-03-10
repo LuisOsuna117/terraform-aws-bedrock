@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0](https://github.com/LuisOsuna117/terraform-aws-bedrock/compare/v0.1.0...v0.2.0) (2026-03-10)
+
+### 🚀 Features
+
+* add multi-prompt support and agent module ([c4e11e7](https://github.com/LuisOsuna117/terraform-aws-bedrock/commit/c4e11e7b6e689fb793f0523e7145cb5bb7d75eb9))
+* **knowledge_base:** add Aurora PostgreSQL (pgvector) and Redshift Serverless support ([0d70a1a](https://github.com/LuisOsuna117/terraform-aws-bedrock/commit/0d70a1a93ddc212cfa4c499e0ae3fbc473618135))
+* **knowledge_base:** auto-create backing store resources per storage type ([ccf4009](https://github.com/LuisOsuna117/terraform-aws-bedrock/commit/ccf400956321e23da2a9034ad68ff545d83c0aa7))
+* **knowledge_base:** default storage_type to S3_VECTORS ([ae185e8](https://github.com/LuisOsuna117/terraform-aws-bedrock/commit/ae185e84d8edbe0a09172008a0e6a676a593b93f))
+
+### 🐛 Bug Fixes
+
+* add missing versions.tf to aurora-pgvector and redshift-serverless examples ([44bfa9b](https://github.com/LuisOsuna117/terraform-aws-bedrock/commit/44bfa9bfb75c2d914ebd0be8c9bd0cc32ac37b6f))
+* address Trivy security findings in knowledge_base module ([28a3059](https://github.com/LuisOsuna117/terraform-aws-bedrock/commit/28a30597c622ba14b77c1a001b57a38e49a2d104))
+
+### 📖 Documentation
+
+* regenerate README with terraform-docs ([cca5e71](https://github.com/LuisOsuna117/terraform-aws-bedrock/commit/cca5e71dbff105f6bf65ac54be4adb26d5b0829d))
+
+### 🔧 Code Refactoring
+
+* flatten knowledge_base_config into individual root variables ([cd8ab0c](https://github.com/LuisOsuna117/terraform-aws-bedrock/commit/cd8ab0cbfc4e8a40b4365bcc016db07538cd0534))
+* **knowledge_base:** consolidate flat vars into vector_config / kendra_config ([cad2d08](https://github.com/LuisOsuna117/terraform-aws-bedrock/commit/cad2d08a56f5512614812f98cc4d472076251ef0))
+* **knowledge_base:** flatten vector_config/kendra_config/redshift_config wrappers ([a13f488](https://github.com/LuisOsuna117/terraform-aws-bedrock/commit/a13f488e2c186bc65ca6b5954fd7200a0c57cddf))
+* remove prompt bridge mode ([128c4e0](https://github.com/LuisOsuna117/terraform-aws-bedrock/commit/128c4e0a9ef889099fb2157544547b6f7a5fdedb))
+* **variables:** flatten field_mapping nesting, default storage_type (KISS) ([f80c9bf](https://github.com/LuisOsuna117/terraform-aws-bedrock/commit/f80c9bf0f5330c4d9e1eb3b23cc21519269eca87))
+
 ## [1.1.0](https://github.com/LuisOsuna117/terraform-aws-bedrock/compare/v1.0.0...v1.1.0) (2026-03-10)
 
 ### 🚀 Features
