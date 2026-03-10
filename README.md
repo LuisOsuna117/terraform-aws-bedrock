@@ -5,6 +5,7 @@ Terraform/OpenTofu module scaffold for Amazon Bedrock resources with DX-first `c
 This initial cut provides:
 - `create_knowledge_base` wrapper for `aws_bedrockagent_knowledge_base`
 - `create_prompt_management` wrapper for `aws_bedrockagent_prompt`
+- `create_guardrail` wrapper for `aws_bedrock_guardrail`
 - `create_prompt_bridge` outputs for passing Bedrock prompt references into external runtimes such as AgentCore
 
 Both are optional and independently toggleable.
@@ -118,6 +119,7 @@ The bridge outputs are:
 
 - Root module does orchestration only.
 - Submodules are callable directly:
+  - `modules/guardrail`
   - `modules/knowledge_base`
   - `modules/prompt_management`
 - Validations fail early when a `create_*` flag is true and required config is missing.
@@ -152,6 +154,18 @@ Current module supports:
 
 Tool configuration in chat templates is intentionally left for a follow-up iteration to keep first delivery focused.
 
+## Guardrail Scope (Current)
+
+Current guardrail support includes:
+- blocked input and output messaging
+- content policy configuration
+- contextual grounding policy configuration
+- cross-region routing configuration
+- sensitive information policy configuration
+- topic policy configuration
+- word policy configuration
+- optional KMS key and tags
+
 ## Outputs
 
 Root module outputs currently include:
@@ -167,6 +181,10 @@ Root module outputs currently include:
 - `prompt_bridge_prompt_arn`
 - `prompt_bridge_prompt_version`
 - `prompt_bridge_environment_variables`
+- `guardrail_id`
+- `guardrail_arn`
+- `guardrail_version`
+- `guardrail_status`
 
 Outputs are `null` when the corresponding `create_*` flag is disabled.
 
@@ -176,4 +194,5 @@ Outputs are `null` when the corresponding `create_*` flag is disabled.
 - `examples/knowledge-base-opensearch-serverless` for a VECTOR knowledge base on OpenSearch Serverless.
 - `examples/knowledge-base-opensearch-managed-cluster` for a VECTOR knowledge base on OpenSearch Managed Cluster.
 - `examples/knowledge-base-s3-vectors` for a VECTOR knowledge base on S3 Vectors.
+- `examples/guardrail` for an Amazon Bedrock guardrail.
 - `examples/prompt-management` for a Bedrock prompt management resource.

@@ -136,3 +136,95 @@ variable "prompt_bridge_config" {
   })
   default = null
 }
+
+variable "create_guardrail" {
+  description = "When true, creates an Amazon Bedrock guardrail using modules/guardrail."
+  type        = bool
+  default     = false
+}
+
+variable "guardrail_config" {
+  description = "Configuration object for the guardrail module. Required when create_guardrail = true."
+  type = object({
+    name                      = optional(string)
+    blocked_input_messaging   = string
+    blocked_outputs_messaging = string
+    description               = optional(string)
+    kms_key_arn               = optional(string)
+    region                    = optional(string)
+    tags                      = optional(map(string), {})
+    content_policy_config = optional(object({
+      filters_config = optional(list(object({
+        input_action      = optional(string)
+        input_enabled     = optional(bool)
+        input_modalities  = optional(list(string))
+        input_strength    = optional(string)
+        output_action     = optional(string)
+        output_enabled    = optional(bool)
+        output_modalities = optional(list(string))
+        output_strength   = optional(string)
+        type              = optional(string)
+      })), [])
+      tier_config = optional(object({
+        tier_name = string
+      }))
+    }))
+    contextual_grounding_policy_config = optional(object({
+      filters_config = list(object({
+        threshold = number
+        type      = string
+      }))
+    }))
+    cross_region_config = optional(object({
+      guardrail_profile_identifier = string
+    }))
+    sensitive_information_policy_config = optional(object({
+      pii_entities_config = optional(list(object({
+        action         = string
+        input_action   = optional(string)
+        input_enabled  = optional(bool)
+        output_action  = optional(string)
+        output_enabled = optional(bool)
+        type           = string
+      })), [])
+      regexes_config = optional(list(object({
+        action         = string
+        description    = optional(string)
+        input_action   = optional(string)
+        input_enabled  = optional(bool)
+        name           = string
+        output_action  = optional(string)
+        output_enabled = optional(bool)
+        pattern        = string
+      })), [])
+    }))
+    topic_policy_config = optional(object({
+      topics_config = list(object({
+        definition = string
+        examples   = optional(list(string))
+        name       = string
+        type       = string
+      }))
+      tier_config = optional(object({
+        tier_name = string
+      }))
+    }))
+    word_policy_config = optional(object({
+      managed_word_lists_config = optional(list(object({
+        input_action   = optional(string)
+        input_enabled  = optional(bool)
+        output_action  = optional(string)
+        output_enabled = optional(bool)
+        type           = string
+      })), [])
+      words_config = optional(list(object({
+        input_action   = optional(string)
+        input_enabled  = optional(bool)
+        output_action  = optional(string)
+        output_enabled = optional(bool)
+        text           = string
+      })), [])
+    }))
+  })
+  default = null
+}
