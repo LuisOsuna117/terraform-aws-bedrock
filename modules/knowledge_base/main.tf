@@ -222,12 +222,15 @@ resource "aws_security_group" "rds" {
     }
   }
 
-  egress {
-    description = "Allow all outbound."
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+  dynamic "egress" {
+    for_each = length(var.rds.allowed_egress_cidr_blocks) > 0 ? [1] : []
+    content {
+      description = "Outbound to specified CIDRs."
+      from_port   = 0
+      to_port     = 0
+      protocol    = "-1"
+      cidr_blocks = var.rds.allowed_egress_cidr_blocks
+    }
   }
 
   tags       = merge(var.tags, var.rds.tags)
@@ -245,6 +248,7 @@ resource "aws_rds_cluster" "this" {
   master_username             = var.rds.master_username
   manage_master_user_password = true
   storage_encrypted           = true
+  kms_key_id                  = var.rds.kms_key_id
   enable_http_endpoint        = true # required for Bedrock RDS Data API access
 
   db_subnet_group_name   = aws_db_subnet_group.this[0].name
@@ -255,8 +259,10 @@ resource "aws_rds_cluster" "this" {
     max_capacity = var.rds.max_capacity
   }
 
-  skip_final_snapshot = var.rds.skip_final_snapshot
-  tags                = merge(var.tags, var.rds.tags)
+  backup_retention_period = var.rds.backup_retention_period
+  deletion_protection     = var.rds.deletion_protection
+  skip_final_snapshot     = var.rds.skip_final_snapshot
+  tags                    = merge(var.tags, var.rds.tags)
 }
 
 resource "aws_rds_cluster_instance" "this" {
@@ -267,7 +273,12 @@ resource "aws_rds_cluster_instance" "this" {
   instance_class     = "db.serverless"
   engine             = aws_rds_cluster.this[0].engine
   engine_version     = aws_rds_cluster.this[0].engine_version
-  tags               = merge(var.tags, var.rds.tags)
+
+  performance_insights_enabled          = var.rds.performance_insights_enabled
+  performance_insights_kms_key_id       = var.rds.performance_insights_kms_key_id
+  performance_insights_retention_period = var.rds.performance_insights_enabled ? 7 : null
+
+  tags = merge(var.tags, var.rds.tags)
 }
 
 # ── Redshift Serverless (auto-created when knowledge_base_type = SQL) ──────────
@@ -305,12 +316,15 @@ resource "aws_security_group" "redshift" {
     }
   }
 
-  egress {
-    description = "Allow all outbound."
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
+  dynamic "egress" {
+    for_each = length(var.redshift.allowed_egress_cidr_blocks) > 0 ? [1] : []
+    content {
+      description = "Outbound to specified CIDRs."
+      from_port   = 0
+      to_port     = 0
+      protocol    = "-1"
+      cidr_blocks = var.redshift.allowed_egress_cidr_blocks
+    }
   }
 
   tags       = merge(var.tags, var.redshift.tags)
