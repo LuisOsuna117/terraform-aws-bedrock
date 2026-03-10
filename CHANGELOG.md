@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0](https://github.com/LuisOsuna117/terraform-aws-bedrock/compare/v1.0.0...v1.1.0) (2026-03-10)
+
+### 🚀 Features
+
+* add bedrock guardrail support ([98d80c8](https://github.com/LuisOsuna117/terraform-aws-bedrock/commit/98d80c8f2826465fb886009edaa3713d7fe40739))
+
+### 🐛 Bug Fixes
+
+* resolve ci validation and docs drift ([8bcef8e](https://github.com/LuisOsuna117/terraform-aws-bedrock/commit/8bcef8ef6d641c7ede0322a773de9e9e207173d7))
+
+### 📖 Documentation
+
+* improve example inputs and outputs ([3a3f5ea](https://github.com/LuisOsuna117/terraform-aws-bedrock/commit/3a3f5eaf7c21b49c06a5e1707848a0dafbe52ad0))
+
 ## 1.0.0 (2026-03-09)
 
 ### 🚀 Features
