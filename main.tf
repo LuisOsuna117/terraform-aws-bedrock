@@ -7,7 +7,7 @@ locals {
     var.tags,
   )
 
-  knowledge_base_name = coalesce(try(var.knowledge_base_config.name, null), var.name)
+  knowledge_base_name = coalesce(var.knowledge_base_name, var.name)
   guardrail_name      = coalesce(try(var.guardrail_config.name, null), var.name)
   agent_name          = coalesce(try(var.agent_config.name, null), var.name)
 
@@ -50,13 +50,8 @@ locals {
 resource "terraform_data" "validations" {
   lifecycle {
     precondition {
-      condition     = !var.create_knowledge_base || var.knowledge_base_config != null
-      error_message = "knowledge_base_config must be provided when create_knowledge_base = true."
-    }
-
-    precondition {
-      condition     = !var.create_knowledge_base || try(trimspace(var.knowledge_base_config.role_arn) != "", false)
-      error_message = "knowledge_base_config.role_arn must be set when create_knowledge_base = true."
+      condition     = !var.create_knowledge_base || try(trimspace(var.knowledge_base_role_arn) != "", false)
+      error_message = "knowledge_base_role_arn must be set when create_knowledge_base = true."
     }
 
     precondition {
@@ -113,23 +108,23 @@ module "knowledge_base" {
   source = "./modules/knowledge_base"
 
   name        = local.knowledge_base_name
-  description = try(var.knowledge_base_config.description, null)
-  role_arn    = var.knowledge_base_config.role_arn
-  region      = try(var.knowledge_base_config.region, null)
-  tags        = merge(local.common_tags, try(var.knowledge_base_config.tags, {}))
+  description = var.knowledge_base_description
+  role_arn    = var.knowledge_base_role_arn
+  region      = var.knowledge_base_region
+  tags        = merge(local.common_tags, var.knowledge_base_tags)
 
-  knowledge_base_type         = try(var.knowledge_base_config.type, "VECTOR")
-  embedding_model_arn         = try(var.knowledge_base_config.embedding_model_arn, null)
-  vector_embedding_dimensions = try(var.knowledge_base_config.vector_embedding_dimensions, null)
-  vector_embedding_data_type  = try(var.knowledge_base_config.vector_embedding_data_type, null)
-  supplemental_s3_uri         = try(var.knowledge_base_config.supplemental_s3_uri, null)
-  storage_type                = try(var.knowledge_base_config.storage_type, "S3_VECTORS")
-  opensearch_serverless       = try(var.knowledge_base_config.opensearch_serverless, {})
-  opensearch_managed_cluster  = try(var.knowledge_base_config.opensearch_managed_cluster, null)
-  s3_vectors                  = try(var.knowledge_base_config.s3_vectors, null)
-  rds                         = try(var.knowledge_base_config.rds, null)
-  kendra_index_arn            = try(var.knowledge_base_config.kendra_index_arn, null)
-  redshift                    = try(var.knowledge_base_config.redshift, null)
+  knowledge_base_type         = var.knowledge_base_type
+  embedding_model_arn         = var.embedding_model_arn
+  vector_embedding_dimensions = var.vector_embedding_dimensions
+  vector_embedding_data_type  = var.vector_embedding_data_type
+  supplemental_s3_uri         = var.supplemental_s3_uri
+  storage_type                = var.storage_type
+  opensearch_serverless       = var.opensearch_serverless
+  opensearch_managed_cluster  = var.opensearch_managed_cluster
+  s3_vectors                  = var.s3_vectors
+  rds                         = var.rds
+  kendra_index_arn            = var.kendra_index_arn
+  redshift                    = var.redshift
 
   depends_on = [terraform_data.validations]
 }
