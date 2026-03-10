@@ -109,13 +109,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Trivy
+        uses: aquasecurity/setup-trivy@v0.2.5
+        with:
+          version: v0.68.2
+          cache: true
+
       - name: Run Trivy (IaC)
-        uses: aquasecurity/trivy-action@0.30.0
+        uses: aquasecurity/trivy-action@0.35.0
         env:
           TRIVY_SKIP_CHECK_UPDATE: "true"
         with:
           scan-type: config
           scan-ref: .
+          skip-setup-trivy: true
           exit-code: "1"           # fail the job if CRITICAL/HIGH findings exist
           severity: CRITICAL,HIGH
           format: table
@@ -124,12 +131,13 @@ jobs:
 
       - name: Run Trivy (IaC) — emit SARIF
         if: always()
-        uses: aquasecurity/trivy-action@0.30.0
+        uses: aquasecurity/trivy-action@0.35.0
         env:
           TRIVY_SKIP_CHECK_UPDATE: "true"
         with:
           scan-type: config
           scan-ref: .
+          skip-setup-trivy: true
           exit-code: "0"           # never block — SARIF upload is informational
           severity: CRITICAL,HIGH
           format: sarif
