@@ -109,43 +109,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Trivy
-        shell: bash
-        run: |
-          set -euo pipefail
-          TRIVY_VERSION="0.68.2"
-          curl -sSfL \
-            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.deb" \
-            -o /tmp/trivy.deb
-          sudo dpkg -i /tmp/trivy.deb
-          trivy --version
-
       - name: Run Trivy (IaC)
-        shell: bash
-        env:
-          TRIVY_SKIP_CHECK_UPDATE: "true"
-        run: |
-          trivy config \
-            --exit-code 1 \
-            --severity CRITICAL,HIGH \
-            --config trivy.yaml \
-            --ignorefile .trivyignore \
-            .
+        uses: aquasecurity/trivy-action@0.35.0
+        with:
+          scan-type: config
+          scan-ref: .
+          exit-code: "1"
+          severity: CRITICAL,HIGH
+          format: table
+          trivy-config: trivy.yaml
+          trivyignores: .trivyignore
 
       - name: Run Trivy (IaC) — emit SARIF
         if: always()
-        shell: bash
-        env:
-          TRIVY_SKIP_CHECK_UPDATE: "true"
-        run: |
-          trivy config \
-            --exit-code 0 \
-            --severity CRITICAL,HIGH \
-            --format sarif \
-            --output trivy-results.sarif \
-            --config trivy.yaml \
-            --ignorefile .trivyignore \
-            .
+        uses: aquasecurity/trivy-action@0.35.0
+        with:
+          scan-type: config
+          scan-ref: .
+          exit-code: "0"
+          severity: CRITICAL,HIGH
+          format: sarif
+          output: trivy-results.sarif
+          trivy-config: trivy.yaml
+          trivyignores: .trivyignore
 
       - name: Upload SARIF to GitHub Code Scanning
         if: always() && hashFiles('trivy-results.sarif') != ''
