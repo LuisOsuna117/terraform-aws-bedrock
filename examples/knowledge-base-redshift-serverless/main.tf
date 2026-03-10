@@ -14,7 +14,7 @@ module "bedrock" {
     type     = "SQL"
 
     # Redshift Serverless — auto-created by the module
-    redshift_config = {
+    redshift = {
       vpc_id                     = var.vpc_id
       subnet_ids                 = var.subnet_ids
       namespace_name             = var.namespace_name

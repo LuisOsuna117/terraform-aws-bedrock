@@ -28,12 +28,6 @@ variable "embedding_model_arn" {
   default     = "arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v2:0"
 }
 
-variable "collection_arn" {
-  description = "OpenSearch Serverless collection ARN."
-  type        = string
-  default     = "arn:aws:aoss:us-east-1:123456789012:collection/examplecollection"
-}
-
 variable "vector_index_name" {
   description = "Vector index name used in OpenSearch Serverless."
   type        = string

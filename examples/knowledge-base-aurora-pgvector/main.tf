@@ -13,21 +13,19 @@ module "bedrock" {
     role_arn = var.knowledge_base_role_arn
     type     = "VECTOR"
 
-    vector_config = {
-      embedding_model_arn         = var.embedding_model_arn
-      vector_embedding_dimensions = var.vector_embedding_dimensions
-      storage_type                = "RDS"
+    embedding_model_arn         = var.embedding_model_arn
+    vector_embedding_dimensions = var.vector_embedding_dimensions
+    storage_type                = "RDS"
 
-      # aurora-pgvector — auto-created by the module
-      rds = {
-        vpc_id                     = var.vpc_id
-        subnet_ids                 = var.subnet_ids
-        cluster_identifier         = var.cluster_identifier
-        database_name              = var.database_name
-        allowed_security_group_ids = var.allowed_security_group_ids
-        allowed_cidr_blocks        = var.allowed_cidr_blocks
-        tags                       = var.tags
-      }
+    # aurora-pgvector — auto-created by the module
+    rds = {
+      vpc_id                     = var.vpc_id
+      subnet_ids                 = var.subnet_ids
+      cluster_identifier         = var.cluster_identifier
+      database_name              = var.database_name
+      allowed_security_group_ids = var.allowed_security_group_ids
+      allowed_cidr_blocks        = var.allowed_cidr_blocks
+      tags                       = var.tags
     }
 
     tags = var.tags

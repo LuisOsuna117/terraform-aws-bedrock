@@ -13,16 +13,13 @@ module "bedrock" {
     role_arn            = var.knowledge_base_role_arn
     type                = "VECTOR"
     embedding_model_arn = var.embedding_model_arn
-    vector_storage_type = "OPENSEARCH_SERVERLESS"
+    storage_type        = "OPENSEARCH_SERVERLESS"
 
     opensearch_serverless = {
-      collection_arn    = var.collection_arn
       vector_index_name = var.vector_index_name
-      field_mapping = {
-        metadata_field = var.metadata_field
-        text_field     = var.text_field
-        vector_field   = var.vector_field
-      }
+      field_metadata    = var.metadata_field
+      field_text        = var.text_field
+      field_vector      = var.vector_field
     }
 
     tags = var.tags

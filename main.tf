@@ -118,10 +118,18 @@ module "knowledge_base" {
   region      = try(var.knowledge_base_config.region, null)
   tags        = merge(local.common_tags, try(var.knowledge_base_config.tags, {}))
 
-  knowledge_base_type = try(var.knowledge_base_config.type, "VECTOR")
-  vector_config       = try(var.knowledge_base_config.vector_config, null)
-  kendra_config       = try(var.knowledge_base_config.kendra_config, null)
-  redshift_config     = try(var.knowledge_base_config.redshift_config, null)
+  knowledge_base_type         = try(var.knowledge_base_config.type, "VECTOR")
+  embedding_model_arn         = try(var.knowledge_base_config.embedding_model_arn, null)
+  vector_embedding_dimensions = try(var.knowledge_base_config.vector_embedding_dimensions, null)
+  vector_embedding_data_type  = try(var.knowledge_base_config.vector_embedding_data_type, null)
+  supplemental_s3_uri         = try(var.knowledge_base_config.supplemental_s3_uri, null)
+  storage_type                = try(var.knowledge_base_config.storage_type, "OPENSEARCH_SERVERLESS")
+  opensearch_serverless       = try(var.knowledge_base_config.opensearch_serverless, {})
+  opensearch_managed_cluster  = try(var.knowledge_base_config.opensearch_managed_cluster, null)
+  s3_vectors                  = try(var.knowledge_base_config.s3_vectors, null)
+  rds                         = try(var.knowledge_base_config.rds, null)
+  kendra_index_arn            = try(var.knowledge_base_config.kendra_index_arn, null)
+  redshift                    = try(var.knowledge_base_config.redshift, null)
 
   depends_on = [terraform_data.validations]
 }

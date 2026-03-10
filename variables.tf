@@ -30,77 +30,73 @@ variable "knowledge_base_config" {
     tags        = optional(map(string), {})
     type        = optional(string, "VECTOR")
 
-    # Required when type = VECTOR
-    vector_config = optional(object({
-      embedding_model_arn         = string
-      vector_embedding_dimensions = optional(number)
-      vector_embedding_data_type  = optional(string)
-      supplemental_s3_uri         = optional(string)
-      storage_type                = optional(string, "OPENSEARCH_SERVERLESS")
+    # VECTOR knowledge base fields
+    embedding_model_arn         = optional(string)
+    vector_embedding_dimensions = optional(number)
+    vector_embedding_data_type  = optional(string)
+    supplemental_s3_uri         = optional(string)
+    storage_type                = optional(string, "OPENSEARCH_SERVERLESS")
 
-      # Auto-created when storage_type = OPENSEARCH_SERVERLESS
-      opensearch_serverless = optional(object({
-        collection_name        = optional(string)
-        vector_index_name      = optional(string)
-        description            = optional(string)
-        kms_key_arn            = optional(string)
-        public_access          = optional(bool, true)
-        data_access_principals = optional(list(string), [])
-        field_metadata         = optional(string, "AMAZON_BEDROCK_METADATA")
-        field_text             = optional(string, "AMAZON_BEDROCK_TEXT_CHUNK")
-        field_vector           = optional(string, "bedrock-knowledge-base-default-vector")
-        tags                   = optional(map(string), {})
-      }), {})
+    # Auto-created when storage_type = OPENSEARCH_SERVERLESS
+    opensearch_serverless = optional(object({
+      collection_name        = optional(string)
+      vector_index_name      = optional(string)
+      description            = optional(string)
+      kms_key_arn            = optional(string)
+      public_access          = optional(bool, true)
+      data_access_principals = optional(list(string), [])
+      field_metadata         = optional(string, "AMAZON_BEDROCK_METADATA")
+      field_text             = optional(string, "AMAZON_BEDROCK_TEXT_CHUNK")
+      field_vector           = optional(string, "bedrock-knowledge-base-default-vector")
+      tags                   = optional(map(string), {})
+    }), {})
 
-      # Existing cluster — not auto-created; supply domain_arn, domain_endpoint, vector_index_name
-      opensearch_managed_cluster = optional(object({
-        domain_arn        = string
-        domain_endpoint   = string
-        vector_index_name = string
-        field_metadata    = optional(string, "AMAZON_BEDROCK_METADATA")
-        field_text        = optional(string, "AMAZON_BEDROCK_TEXT_CHUNK")
-        field_vector      = optional(string, "bedrock-knowledge-base-default-vector")
-      }))
-
-      # Auto-created when storage_type = S3_VECTORS
-      s3_vectors = optional(object({
-        vector_bucket_name = optional(string)
-        index_name         = optional(string)
-        data_type          = optional(string, "float32")
-        dimension          = number
-        distance_metric    = optional(string, "euclidean")
-        tags               = optional(map(string), {})
-      }))
-
-      # Auto-created when storage_type = RDS (Aurora PostgreSQL + pgvector)
-      rds = optional(object({
-        vpc_id                     = string
-        subnet_ids                 = list(string)
-        cluster_identifier         = optional(string)
-        engine_version             = optional(string, "16.4")
-        database_name              = optional(string, "bedrock_kb")
-        master_username            = optional(string, "bedrock")
-        table_name                 = optional(string, "bedrock_integration.bedrock_kb")
-        min_capacity               = optional(number, 0.5)
-        max_capacity               = optional(number, 4.0)
-        skip_final_snapshot        = optional(bool, true)
-        allowed_cidr_blocks        = optional(list(string), [])
-        allowed_security_group_ids = optional(list(string), [])
-        field_metadata             = optional(string, "metadata")
-        field_primary_key          = optional(string, "id")
-        field_text                 = optional(string, "chunks")
-        field_vector               = optional(string, "embedding")
-        tags                       = optional(map(string), {})
-      }))
+    # Existing cluster — not auto-created; supply domain_arn, domain_endpoint, vector_index_name
+    opensearch_managed_cluster = optional(object({
+      domain_arn        = string
+      domain_endpoint   = string
+      vector_index_name = string
+      field_metadata    = optional(string, "AMAZON_BEDROCK_METADATA")
+      field_text        = optional(string, "AMAZON_BEDROCK_TEXT_CHUNK")
+      field_vector      = optional(string, "bedrock-knowledge-base-default-vector")
     }))
 
-    # Required when type = KENDRA
-    kendra_config = optional(object({
-      kendra_index_arn = string
+    # Auto-created when storage_type = S3_VECTORS
+    s3_vectors = optional(object({
+      vector_bucket_name = optional(string)
+      index_name         = optional(string)
+      data_type          = optional(string, "float32")
+      dimension          = number
+      distance_metric    = optional(string, "euclidean")
+      tags               = optional(map(string), {})
     }))
 
-    # Required when type = SQL (Redshift Serverless structured-data KB)
-    redshift_config = optional(object({
+    # Auto-created when storage_type = RDS (Aurora PostgreSQL + pgvector)
+    rds = optional(object({
+      vpc_id                     = string
+      subnet_ids                 = list(string)
+      cluster_identifier         = optional(string)
+      engine_version             = optional(string, "16.4")
+      database_name              = optional(string, "bedrock_kb")
+      master_username            = optional(string, "bedrock")
+      table_name                 = optional(string, "bedrock_integration.bedrock_kb")
+      min_capacity               = optional(number, 0.5)
+      max_capacity               = optional(number, 4.0)
+      skip_final_snapshot        = optional(bool, true)
+      allowed_cidr_blocks        = optional(list(string), [])
+      allowed_security_group_ids = optional(list(string), [])
+      field_metadata             = optional(string, "metadata")
+      field_primary_key          = optional(string, "id")
+      field_text                 = optional(string, "chunks")
+      field_vector               = optional(string, "embedding")
+      tags                       = optional(map(string), {})
+    }))
+
+    # KENDRA knowledge base fields
+    kendra_index_arn = optional(string)
+
+    # SQL (Redshift Serverless) knowledge base fields
+    redshift = optional(object({
       vpc_id                     = string
       subnet_ids                 = list(string)
       namespace_name             = optional(string)

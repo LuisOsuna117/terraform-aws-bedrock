@@ -40,12 +40,6 @@ variable "vector_embedding_data_type" {
   default     = "FLOAT32"
 }
 
-variable "s3_vectors_index_arn" {
-  description = "S3 Vectors index ARN."
-  type        = string
-  default     = "arn:aws:s3vectors:us-east-1:123456789012:bucket/example-vector-bucket/index/example-index"
-}
-
 variable "tags" {
   description = "Tags applied to resources created by this example."
   type        = map(string)

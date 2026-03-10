@@ -15,10 +15,10 @@ module "bedrock" {
     embedding_model_arn         = var.embedding_model_arn
     vector_embedding_dimensions = var.vector_embedding_dimensions
     vector_embedding_data_type  = var.vector_embedding_data_type
-    vector_storage_type         = "S3_VECTORS"
+    storage_type                = "S3_VECTORS"
 
     s3_vectors = {
-      index_arn = var.s3_vectors_index_arn
+      dimension = var.vector_embedding_dimensions
     }
 
     tags = var.tags
