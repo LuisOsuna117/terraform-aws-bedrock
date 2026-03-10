@@ -51,7 +51,9 @@ resource "terraform_data" "validations" {
     }
 
     precondition {
-      condition     = !var.create_prompt_bridge || local.prompt_bridge_prompt_id != null
+      condition = !var.create_prompt_bridge || (
+        var.create_prompt_management || try(trimspace(var.prompt_bridge_config.existing_prompt_id) != "", false)
+      )
       error_message = "Prompt bridge requires a prompt ID. Set create_prompt_management = true or provide prompt_bridge_config.existing_prompt_id."
     }
 

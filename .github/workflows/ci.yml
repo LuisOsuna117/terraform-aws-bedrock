@@ -138,7 +138,7 @@ jobs:
           trivyignores: .trivyignore
 
       - name: Upload SARIF to GitHub Code Scanning
-        if: always()
+        if: always() && hashFiles('trivy-results.sarif') != ''
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: trivy-results.sarif
