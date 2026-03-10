@@ -237,28 +237,6 @@ variable "prompt_management_config" {
   default = null
 }
 
-variable "create_prompt_bridge" {
-  description = "When true, exposes resolved prompt references and environment variables for AgentCore/app runtimes. No IAM resources are created."
-  type        = bool
-  default     = false
-}
-
-variable "prompt_bridge_config" {
-  description = "Bridge configuration for reusing Bedrock Prompt Management from external runtimes (such as AgentCore apps)."
-  type = object({
-    existing_prompt_arn = optional(string)
-    existing_prompt_id  = optional(string)
-    prompt_version      = optional(string)
-    prompt_key          = optional(string)
-    env_var_names = optional(object({
-      prompt_id      = optional(string, "BEDROCK_PROMPT_ID")
-      prompt_arn     = optional(string, "BEDROCK_PROMPT_ARN")
-      prompt_version = optional(string, "BEDROCK_PROMPT_VERSION")
-    }), {})
-  })
-  default = null
-}
-
 variable "create_guardrail" {
   description = "When true, creates an Amazon Bedrock guardrail using modules/guardrail."
   type        = bool

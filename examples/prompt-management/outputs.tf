@@ -3,7 +3,3 @@ output "prompts" {
   value       = module.bedrock.prompts
 }
 
-output "prompt_bridge_environment_variables" {
-  description = "Environment variable map produced by the prompt bridge."
-  value       = module.bedrock.prompt_bridge_environment_variables
-}

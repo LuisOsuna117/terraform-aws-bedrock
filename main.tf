@@ -11,34 +11,6 @@ locals {
   guardrail_name      = coalesce(try(var.guardrail_config.name, null), var.name)
   agent_name          = coalesce(try(var.agent_config.name, null), var.name)
 
-  # Resolve the target prompt from the managed module for the bridge.
-  # Use prompt_bridge_config.prompt_key when multiple prompts are present;
-  # otherwise fall back to the first entry in the map.
-  _bridge_prompt_key = try(var.prompt_bridge_config.prompt_key, null)
-  _bridge_managed_prompt = var.create_prompt_management ? (
-    local._bridge_prompt_key != null
-    ? module.prompt_management[0].prompts[local._bridge_prompt_key]
-    : values(module.prompt_management[0].prompts)[0]
-  ) : null
-
-  prompt_bridge_prompt_arn = (
-    try(var.prompt_bridge_config.existing_prompt_arn, null) != null
-    ? var.prompt_bridge_config.existing_prompt_arn
-    : try(local._bridge_managed_prompt.arn, null)
-  )
-
-  prompt_bridge_prompt_id = (
-    try(var.prompt_bridge_config.existing_prompt_id, null) != null
-    ? var.prompt_bridge_config.existing_prompt_id
-    : try(local._bridge_managed_prompt.id, null)
-  )
-
-  prompt_bridge_prompt_version = coalesce(
-    try(var.prompt_bridge_config.prompt_version, null),
-    try(local._bridge_managed_prompt.version, null),
-    "DRAFT",
-  )
-
   # Auto-wire the sibling guardrail module's ID to the agent unless explicitly overridden.
   agent_guardrail_id = (
     try(var.agent_config.guardrail_id, null) != null
@@ -57,18 +29,6 @@ resource "terraform_data" "validations" {
     precondition {
       condition     = !var.create_prompt_management || var.prompt_management_config != null
       error_message = "prompt_management_config must be provided when create_prompt_management = true."
-    }
-
-    precondition {
-      condition     = !var.create_prompt_bridge || var.prompt_bridge_config != null
-      error_message = "prompt_bridge_config must be provided when create_prompt_bridge = true."
-    }
-
-    precondition {
-      condition = !var.create_prompt_bridge || (
-        var.create_prompt_management || try(trimspace(var.prompt_bridge_config.existing_prompt_id) != "", false)
-      )
-      error_message = "Prompt bridge requires a prompt ID. Set create_prompt_management = true or provide prompt_bridge_config.existing_prompt_id."
     }
 
     precondition {

@@ -61,8 +61,4 @@ module "bedrock" {
     }
   }
 
-  create_prompt_bridge = true
-  prompt_bridge_config = {
-    prompt_key = "system_prompt"
-  }
 }
