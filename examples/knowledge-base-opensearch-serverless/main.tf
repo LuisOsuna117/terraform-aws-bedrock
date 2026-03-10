@@ -1,28 +1,30 @@
 provider "aws" {
-  region = "us-east-1"
+  region = var.aws_region
 }
 
 module "bedrock" {
   source = "../../"
 
-  name = "example-os-serverless-kb"
+  name = var.module_name
 
   create_knowledge_base = true
   knowledge_base_config = {
-    name                = "example-os-serverless-kb"
-    role_arn            = "arn:aws:iam::123456789012:role/bedrock-kb-role"
+    name                = var.knowledge_base_name
+    role_arn            = var.knowledge_base_role_arn
     type                = "VECTOR"
-    embedding_model_arn = "arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v2:0"
+    embedding_model_arn = var.embedding_model_arn
     vector_storage_type = "OPENSEARCH_SERVERLESS"
 
     opensearch_serverless = {
-      collection_arn    = "arn:aws:aoss:us-east-1:123456789012:collection/examplecollection"
-      vector_index_name = "bedrock-kb-index"
+      collection_arn    = var.collection_arn
+      vector_index_name = var.vector_index_name
       field_mapping = {
-        metadata_field = "AMAZON_BEDROCK_METADATA"
-        text_field     = "AMAZON_BEDROCK_TEXT_CHUNK"
-        vector_field   = "bedrock-knowledge-base-default-vector"
+        metadata_field = var.metadata_field
+        text_field     = var.text_field
+        vector_field   = var.vector_field
       }
     }
+
+    tags = var.tags
   }
 }

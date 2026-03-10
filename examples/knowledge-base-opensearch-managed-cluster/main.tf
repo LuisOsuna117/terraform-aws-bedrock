@@ -1,30 +1,32 @@
 provider "aws" {
-  region = "us-east-1"
+  region = var.aws_region
 }
 
 module "bedrock" {
   source = "../../"
 
-  name = "example-os-managed-kb"
+  name = var.module_name
 
   create_knowledge_base = true
   knowledge_base_config = {
-    name                       = "example-os-managed-kb"
-    role_arn                   = "arn:aws:iam::123456789012:role/bedrock-kb-role"
+    name                       = var.knowledge_base_name
+    role_arn                   = var.knowledge_base_role_arn
     type                       = "VECTOR"
-    embedding_model_arn        = "arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v2:0"
+    embedding_model_arn        = var.embedding_model_arn
     vector_storage_type        = "OPENSEARCH_MANAGED_CLUSTER"
-    vector_embedding_data_type = "FLOAT32"
+    vector_embedding_data_type = var.vector_embedding_data_type
 
     opensearch_managed_cluster = {
-      domain_arn        = "arn:aws:es:us-east-1:123456789012:domain/example-domain"
-      domain_endpoint   = "https://search-example-domain.us-east-1.es.amazonaws.com"
-      vector_index_name = "example-index"
+      domain_arn        = var.domain_arn
+      domain_endpoint   = var.domain_endpoint
+      vector_index_name = var.vector_index_name
       field_mapping = {
-        metadata_field = "metadata"
-        text_field     = "chunks"
-        vector_field   = "embedding"
+        metadata_field = var.metadata_field
+        text_field     = var.text_field
+        vector_field   = var.vector_field
       }
     }
+
+    tags = var.tags
   }
 }

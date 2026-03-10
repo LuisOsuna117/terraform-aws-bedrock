@@ -1,18 +1,19 @@
 provider "aws" {
-  region = "us-east-1"
+  region = var.aws_region
 }
 
 module "bedrock" {
   source = "../../"
 
-  name = "example-guardrail"
+  name = var.module_name
 
   create_guardrail = true
   guardrail_config = {
-    name                      = "example-guardrail"
-    blocked_input_messaging   = "This request was blocked by the guardrail."
-    blocked_outputs_messaging = "This response was blocked by the guardrail."
-    description               = "Example guardrail with content, topic, word, and sensitive information policies."
+    name                      = var.guardrail_name
+    blocked_input_messaging   = var.blocked_input_messaging
+    blocked_outputs_messaging = var.blocked_outputs_messaging
+    description               = var.guardrail_description
+    tags                      = var.tags
 
     content_policy_config = {
       filters_config = [

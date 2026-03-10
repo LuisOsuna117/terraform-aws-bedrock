@@ -1,23 +1,24 @@
 provider "aws" {
-  region = "us-east-1"
+  region = var.aws_region
 }
 
 module "bedrock" {
   source = "../../"
 
-  name = "example-prompt-management"
+  name = var.module_name
 
   create_prompt_management = true
   prompt_management_config = {
-    name            = "example-system-prompt"
-    description     = "Prompt management example with multiple variants."
-    default_variant = "default"
+    name            = var.prompt_name
+    description     = var.prompt_description
+    default_variant = var.default_variant
+    tags            = var.tags
 
     variants = [
       {
-        name          = "default"
+        name          = var.default_variant
         template_type = "TEXT"
-        model_id      = "amazon.titan-text-express-v1"
+        model_id      = var.model_id
         metadata = {
           owner = "platform"
           tier  = "default"
@@ -33,9 +34,9 @@ module "bedrock" {
         }
       },
       {
-        name          = "chat-default"
+        name          = var.chat_variant_name
         template_type = "CHAT"
-        model_id      = "amazon.titan-text-express-v1"
+        model_id      = var.model_id
         chat_template = {
           input_variables = ["tenant", "question"]
           system_prompts = [
