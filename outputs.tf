@@ -13,6 +13,36 @@ output "knowledge_base_name" {
   value       = var.create_knowledge_base ? module.knowledge_base[0].name : null
 }
 
+output "rds_cluster_arn" {
+  description = "Aurora cluster ARN. Null when storage_type != RDS."
+  value       = var.create_knowledge_base ? module.knowledge_base[0].rds_cluster_arn : null
+}
+
+output "rds_cluster_endpoint" {
+  description = "Aurora writer endpoint. Null when storage_type != RDS."
+  value       = var.create_knowledge_base ? module.knowledge_base[0].rds_cluster_endpoint : null
+}
+
+output "rds_secret_arn" {
+  description = "ARN of the Secrets Manager secret holding the Aurora master credentials. Null when storage_type != RDS."
+  value       = var.create_knowledge_base ? module.knowledge_base[0].rds_secret_arn : null
+}
+
+output "redshift_namespace_arn" {
+  description = "Redshift Serverless namespace ARN. Null when knowledge_base_type != SQL."
+  value       = var.create_knowledge_base ? module.knowledge_base[0].redshift_namespace_arn : null
+}
+
+output "redshift_workgroup_endpoint" {
+  description = "Redshift Serverless workgroup endpoint address. Null when knowledge_base_type != SQL."
+  value       = var.create_knowledge_base ? module.knowledge_base[0].redshift_workgroup_endpoint : null
+}
+
+output "redshift_admin_secret_arn" {
+  description = "ARN of the Secrets Manager secret holding the Redshift admin credentials. Null when knowledge_base_type != SQL."
+  value       = var.create_knowledge_base ? module.knowledge_base[0].redshift_admin_secret_arn : null
+}
+
 output "prompts" {
   description = "Map of logical key → prompt attributes (id, arn, name, version, created_at, updated_at). Empty map when create_prompt_management = false."
   value       = var.create_prompt_management ? module.prompt_management[0].prompts : {}

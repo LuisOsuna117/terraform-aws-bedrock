@@ -75,11 +75,49 @@ variable "knowledge_base_config" {
           vector_field   = string
         })
       }))
+
+      # Auto-created when storage_type = RDS (Aurora PostgreSQL + pgvector)
+      rds = optional(object({
+        vpc_id                     = string
+        subnet_ids                 = list(string)
+        cluster_identifier         = optional(string)
+        engine_version             = optional(string, "16.4")
+        database_name              = optional(string, "bedrock_kb")
+        master_username            = optional(string, "bedrock")
+        table_name                 = optional(string, "bedrock_integration.bedrock_kb")
+        min_capacity               = optional(number, 0.5)
+        max_capacity               = optional(number, 4.0)
+        skip_final_snapshot        = optional(bool, true)
+        allowed_cidr_blocks        = optional(list(string), [])
+        allowed_security_group_ids = optional(list(string), [])
+        field_mapping = optional(object({
+          metadata_field    = optional(string, "metadata")
+          primary_key_field = optional(string, "id")
+          text_field        = optional(string, "chunks")
+          vector_field      = optional(string, "embedding")
+        }), {})
+        tags = optional(map(string), {})
+      }))
     }))
 
     # Required when type = KENDRA
     kendra_config = optional(object({
       kendra_index_arn = string
+    }))
+
+    # Required when type = SQL (Redshift Serverless structured-data KB)
+    redshift_config = optional(object({
+      vpc_id                     = string
+      subnet_ids                 = list(string)
+      namespace_name             = optional(string)
+      workgroup_name             = optional(string)
+      database_name              = optional(string, "bedrock_kb")
+      admin_username             = optional(string, "admin")
+      base_capacity              = optional(number, 8)
+      publicly_accessible        = optional(bool, false)
+      allowed_cidr_blocks        = optional(list(string), [])
+      allowed_security_group_ids = optional(list(string), [])
+      tags                       = optional(map(string), {})
     }))
   })
   default = null

@@ -27,13 +27,13 @@ variable "tags" {
 }
 
 variable "knowledge_base_type" {
-  description = "Knowledge base type. Supported values: VECTOR, KENDRA."
+  description = "Knowledge base type. Supported values: VECTOR, KENDRA, SQL."
   type        = string
   default     = "VECTOR"
 
   validation {
-    condition     = contains(["VECTOR", "KENDRA"], var.knowledge_base_type)
-    error_message = "knowledge_base_type must be either VECTOR or KENDRA."
+    condition     = contains(["VECTOR", "KENDRA", "SQL"], var.knowledge_base_type)
+    error_message = "knowledge_base_type must be VECTOR, KENDRA, or SQL."
   }
 }
 
@@ -83,6 +83,29 @@ variable "vector_config" {
       dimension          = number
       distance_metric    = optional(string, "euclidean")
       tags               = optional(map(string), {})
+    }))
+
+    # Auto-created when storage_type = RDS (Aurora PostgreSQL + pgvector)
+    rds = optional(object({
+      vpc_id                     = string
+      subnet_ids                 = list(string)
+      cluster_identifier         = optional(string)
+      engine_version             = optional(string, "16.4")
+      database_name              = optional(string, "bedrock_kb")
+      master_username            = optional(string, "bedrock")
+      table_name                 = optional(string, "bedrock_integration.bedrock_kb")
+      min_capacity               = optional(number, 0.5)
+      max_capacity               = optional(number, 4.0)
+      skip_final_snapshot        = optional(bool, true)
+      allowed_cidr_blocks        = optional(list(string), [])
+      allowed_security_group_ids = optional(list(string), [])
+      field_mapping = optional(object({
+        metadata_field    = optional(string, "metadata")
+        primary_key_field = optional(string, "id")
+        text_field        = optional(string, "chunks")
+        vector_field      = optional(string, "embedding")
+      }), {})
+      tags = optional(map(string), {})
     }))
 
     # Auto-created when storage_type = OPENSEARCH_SERVERLESS
@@ -136,6 +159,38 @@ variable "kendra_config" {
   description = "Configuration for KENDRA knowledge bases. Required when knowledge_base_type = KENDRA."
   type = object({
     kendra_index_arn = string
+  })
+  default = null
+}
+
+variable "redshift_config" {
+  description = <<-EOT
+    Configuration for SQL (Redshift Serverless) knowledge bases. Required when knowledge_base_type = SQL.
+
+    vpc_id                     - VPC where the Redshift workgroup is deployed (required)
+    subnet_ids                 - Subnets for the workgroup (required, ≥3 across AZs recommended)
+    namespace_name             - Namespace name (defaults to var.name)
+    workgroup_name             - Workgroup name (defaults to var.name)
+    database_name              - Database to create and query (default: bedrock_kb)
+    admin_username             - Admin user (default: admin); password managed by AWS Secrets Manager
+    base_capacity              - Redshift Processing Units for the workgroup (default: 8)
+    publicly_accessible        - Whether the workgroup endpoint is publicly accessible (default: false)
+    allowed_cidr_blocks        - Ingress CIDR blocks for port 5439 (default: none)
+    allowed_security_group_ids - Ingress security groups for port 5439 (default: none)
+    tags                       - Additional tags
+  EOT
+  type = object({
+    vpc_id                     = string
+    subnet_ids                 = list(string)
+    namespace_name             = optional(string)
+    workgroup_name             = optional(string)
+    database_name              = optional(string, "bedrock_kb")
+    admin_username             = optional(string, "admin")
+    base_capacity              = optional(number, 8)
+    publicly_accessible        = optional(bool, false)
+    allowed_cidr_blocks        = optional(list(string), [])
+    allowed_security_group_ids = optional(list(string), [])
+    tags                       = optional(map(string), {})
   })
   default = null
 }

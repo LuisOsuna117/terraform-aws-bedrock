@@ -121,6 +121,7 @@ module "knowledge_base" {
   knowledge_base_type = try(var.knowledge_base_config.type, "VECTOR")
   vector_config       = try(var.knowledge_base_config.vector_config, null)
   kendra_config       = try(var.knowledge_base_config.kendra_config, null)
+  redshift_config     = try(var.knowledge_base_config.redshift_config, null)
 
   depends_on = [terraform_data.validations]
 }

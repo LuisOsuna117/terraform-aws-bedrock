@@ -51,3 +51,37 @@ output "opensearch_index_name" {
   description = "Name of the expected vector index inside the OpenSearch Serverless collection. Null when storage_type != OPENSEARCH_SERVERLESS."
   value       = length(aws_opensearchserverless_collection.this) > 0 ? local.oss_index_name : null
 }
+
+# ── Aurora PostgreSQL ───────────────────────────────────────────────────────────
+
+output "rds_cluster_arn" {
+  description = "Aurora cluster ARN. Null when storage_type != RDS."
+  value       = length(aws_rds_cluster.this) > 0 ? aws_rds_cluster.this[0].arn : null
+}
+
+output "rds_cluster_endpoint" {
+  description = "Aurora writer endpoint. Null when storage_type != RDS."
+  value       = length(aws_rds_cluster.this) > 0 ? aws_rds_cluster.this[0].endpoint : null
+}
+
+output "rds_secret_arn" {
+  description = "ARN of the Secrets Manager secret holding the Aurora master credentials. Null when storage_type != RDS."
+  value       = length(aws_rds_cluster.this) > 0 ? aws_rds_cluster.this[0].master_user_secret[0].secret_arn : null
+}
+
+# ── Redshift Serverless ─────────────────────────────────────────────────────
+
+output "redshift_namespace_arn" {
+  description = "Redshift Serverless namespace ARN. Null when knowledge_base_type != SQL."
+  value       = length(aws_redshiftserverless_namespace.this) > 0 ? aws_redshiftserverless_namespace.this[0].arn : null
+}
+
+output "redshift_workgroup_endpoint" {
+  description = "Redshift Serverless workgroup endpoint address. Null when knowledge_base_type != SQL."
+  value       = length(aws_redshiftserverless_workgroup.this) > 0 ? aws_redshiftserverless_workgroup.this[0].endpoint[0].address : null
+}
+
+output "redshift_admin_secret_arn" {
+  description = "ARN of the Secrets Manager secret holding the Redshift admin credentials. Null when knowledge_base_type != SQL."
+  value       = length(aws_redshiftserverless_namespace.this) > 0 ? aws_redshiftserverless_namespace.this[0].admin_password_secret_arn : null
+}
