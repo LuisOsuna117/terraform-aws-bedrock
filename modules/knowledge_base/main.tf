@@ -191,7 +191,7 @@ resource "aws_opensearchserverless_access_policy" "this" {
 #     metadata json
 #   );
 # Table name and field names are configurable via vector_config.rds.table_name
-# and vector_config.rds.field_mapping.
+# and vector_config.rds.field_metadata / field_text / field_vector / field_primary_key.
 # The KB role (var.role_arn) needs rds-data:ExecuteStatement,
 # rds-data:BatchExecuteStatement, and secretsmanager:GetSecretValue permissions.
 
@@ -434,9 +434,9 @@ resource "aws_bedrockagent_knowledge_base" "this" {
           vector_index_name = local.oss_index_name
 
           field_mapping {
-            metadata_field = try(var.vector_config.opensearch_serverless.field_mapping.metadata_field, "AMAZON_BEDROCK_METADATA")
-            text_field     = try(var.vector_config.opensearch_serverless.field_mapping.text_field, "AMAZON_BEDROCK_TEXT_CHUNK")
-            vector_field   = try(var.vector_config.opensearch_serverless.field_mapping.vector_field, "bedrock-knowledge-base-default-vector")
+            metadata_field = var.vector_config.opensearch_serverless.field_metadata
+            text_field     = var.vector_config.opensearch_serverless.field_text
+            vector_field   = var.vector_config.opensearch_serverless.field_vector
           }
         }
       }
@@ -449,9 +449,9 @@ resource "aws_bedrockagent_knowledge_base" "this" {
           vector_index_name = var.vector_config.opensearch_managed_cluster.vector_index_name
 
           field_mapping {
-            metadata_field = var.vector_config.opensearch_managed_cluster.field_mapping.metadata_field
-            text_field     = var.vector_config.opensearch_managed_cluster.field_mapping.text_field
-            vector_field   = var.vector_config.opensearch_managed_cluster.field_mapping.vector_field
+            metadata_field = var.vector_config.opensearch_managed_cluster.field_metadata
+            text_field     = var.vector_config.opensearch_managed_cluster.field_text
+            vector_field   = var.vector_config.opensearch_managed_cluster.field_vector
           }
         }
       }
@@ -472,10 +472,10 @@ resource "aws_bedrockagent_knowledge_base" "this" {
           table_name             = try(var.vector_config.rds.table_name, "bedrock_integration.bedrock_kb")
 
           field_mapping {
-            metadata_field    = try(var.vector_config.rds.field_mapping.metadata_field, "metadata")
-            primary_key_field = try(var.vector_config.rds.field_mapping.primary_key_field, "id")
-            text_field        = try(var.vector_config.rds.field_mapping.text_field, "chunks")
-            vector_field      = try(var.vector_config.rds.field_mapping.vector_field, "embedding")
+            metadata_field    = var.vector_config.rds.field_metadata
+            primary_key_field = var.vector_config.rds.field_primary_key
+            text_field        = var.vector_config.rds.field_text
+            vector_field      = var.vector_config.rds.field_vector
           }
         }
       }

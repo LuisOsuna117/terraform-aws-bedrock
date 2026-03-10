@@ -45,35 +45,56 @@ variable "vector_config" {
     vector_embedding_dimensions - Optional dimensions override
     vector_embedding_data_type  - FLOAT32 or BINARY
     supplemental_s3_uri         - S3 URI for supplemental multimodal data
-    storage_type                - OPENSEARCH_SERVERLESS | OPENSEARCH_MANAGED_CLUSTER | S3_VECTORS
+    storage_type                - OPENSEARCH_SERVERLESS (default) | OPENSEARCH_MANAGED_CLUSTER | S3_VECTORS | RDS
+
+    opensearch_serverless (auto-created; all sub-fields optional):
+      collection_name, vector_index_name, description, kms_key_arn,
+      public_access, data_access_principals, tags
+      field_metadata / field_text / field_vector  — Bedrock field name overrides
+
+    opensearch_managed_cluster (existing cluster — supply ARN/endpoint):
+      domain_arn, domain_endpoint, vector_index_name
+      field_metadata / field_text / field_vector  — optional, Bedrock defaults used
 
     s3_vectors (auto-created):
-      vector_bucket_name - bucket name (default: var.name)
-      index_name         - index name  (default: var.name)
-      data_type          - float32 or binary (default: float32)
-      dimension          - vector dimension, required
-      distance_metric    - euclidean | cosine | dot_product (default: euclidean)
-      tags               - additional tags for the bucket
+      dimension (required), vector_bucket_name, index_name, data_type, distance_metric, tags
 
-    opensearch_serverless (auto-created — collection + encryption/network/data-access policies):
-      collection_name        - collection name (default: var.name, max 32 chars)
-      vector_index_name      - index name to reference in the KB (default: var.name)
-      description            - optional collection description
-      kms_key_arn            - customer KMS key to encrypt the collection; null = AWS-owned key
-      public_access          - allow public network access (default: true)
-      data_access_principals - extra IAM principal ARNs granted index read/write access
-      field_mapping          - override Bedrock default field names in the index
-      tags                   - additional tags for the collection
-
-    opensearch_managed_cluster (existing cluster, not auto-created):
-      domain_arn, domain_endpoint, vector_index_name, field_mapping
+    rds (auto-created Aurora Serverless v2):
+      vpc_id, subnet_ids (required); cluster_identifier, engine_version, database_name,
+      master_username, table_name, min_capacity, max_capacity, skip_final_snapshot,
+      allowed_cidr_blocks, allowed_security_group_ids, tags
+      field_metadata / field_text / field_vector / field_primary_key  — field name overrides
   EOT
   type = object({
     embedding_model_arn         = string
     vector_embedding_dimensions = optional(number)
     vector_embedding_data_type  = optional(string)
     supplemental_s3_uri         = optional(string)
-    storage_type                = string
+    storage_type                = optional(string, "OPENSEARCH_SERVERLESS")
+
+    # Auto-created when storage_type = OPENSEARCH_SERVERLESS
+    opensearch_serverless = optional(object({
+      collection_name        = optional(string)
+      vector_index_name      = optional(string)
+      description            = optional(string)
+      kms_key_arn            = optional(string)
+      public_access          = optional(bool, true)
+      data_access_principals = optional(list(string), [])
+      field_metadata         = optional(string, "AMAZON_BEDROCK_METADATA")
+      field_text             = optional(string, "AMAZON_BEDROCK_TEXT_CHUNK")
+      field_vector           = optional(string, "bedrock-knowledge-base-default-vector")
+      tags                   = optional(map(string), {})
+    }), {})
+
+    # Existing cluster — not auto-created; supply domain_arn, domain_endpoint, vector_index_name
+    opensearch_managed_cluster = optional(object({
+      domain_arn        = string
+      domain_endpoint   = string
+      vector_index_name = string
+      field_metadata    = optional(string, "AMAZON_BEDROCK_METADATA")
+      field_text        = optional(string, "AMAZON_BEDROCK_TEXT_CHUNK")
+      field_vector      = optional(string, "bedrock-knowledge-base-default-vector")
+    }))
 
     # Auto-created when storage_type = S3_VECTORS
     s3_vectors = optional(object({
@@ -99,51 +120,21 @@ variable "vector_config" {
       skip_final_snapshot        = optional(bool, true)
       allowed_cidr_blocks        = optional(list(string), [])
       allowed_security_group_ids = optional(list(string), [])
-      field_mapping = optional(object({
-        metadata_field    = optional(string, "metadata")
-        primary_key_field = optional(string, "id")
-        text_field        = optional(string, "chunks")
-        vector_field      = optional(string, "embedding")
-      }), {})
-      tags = optional(map(string), {})
-    }))
-
-    # Auto-created when storage_type = OPENSEARCH_SERVERLESS
-    opensearch_serverless = optional(object({
-      collection_name        = optional(string)
-      vector_index_name      = optional(string)
-      description            = optional(string)
-      kms_key_arn            = optional(string)
-      public_access          = optional(bool, true)
-      data_access_principals = optional(list(string), [])
-      field_mapping = optional(object({
-        metadata_field = optional(string, "AMAZON_BEDROCK_METADATA")
-        text_field     = optional(string, "AMAZON_BEDROCK_TEXT_CHUNK")
-        vector_field   = optional(string, "bedrock-knowledge-base-default-vector")
-      }), {})
-      tags = optional(map(string), {})
-    }))
-
-    # Existing cluster — not auto-created; provide all details explicitly
-    opensearch_managed_cluster = optional(object({
-      domain_arn        = string
-      domain_endpoint   = string
-      vector_index_name = string
-      field_mapping = object({
-        metadata_field = string
-        text_field     = string
-        vector_field   = string
-      })
+      field_metadata             = optional(string, "metadata")
+      field_primary_key          = optional(string, "id")
+      field_text                 = optional(string, "chunks")
+      field_vector               = optional(string, "embedding")
+      tags                       = optional(map(string), {})
     }))
   })
   default = null
 
   validation {
     condition = var.vector_config == null || contains(
-      ["OPENSEARCH_SERVERLESS", "OPENSEARCH_MANAGED_CLUSTER", "S3_VECTORS"],
+      ["OPENSEARCH_SERVERLESS", "OPENSEARCH_MANAGED_CLUSTER", "S3_VECTORS", "RDS"],
       var.vector_config.storage_type
     )
-    error_message = "vector_config.storage_type must be OPENSEARCH_SERVERLESS, OPENSEARCH_MANAGED_CLUSTER, or S3_VECTORS."
+    error_message = "vector_config.storage_type must be OPENSEARCH_SERVERLESS, OPENSEARCH_MANAGED_CLUSTER, S3_VECTORS, or RDS."
   }
 
   validation {

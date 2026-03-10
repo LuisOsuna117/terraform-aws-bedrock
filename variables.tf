@@ -36,17 +36,7 @@ variable "knowledge_base_config" {
       vector_embedding_dimensions = optional(number)
       vector_embedding_data_type  = optional(string)
       supplemental_s3_uri         = optional(string)
-      storage_type                = string
-
-      # Auto-created when storage_type = S3_VECTORS
-      s3_vectors = optional(object({
-        vector_bucket_name = optional(string)
-        index_name         = optional(string)
-        data_type          = optional(string, "float32")
-        dimension          = number
-        distance_metric    = optional(string, "euclidean")
-        tags               = optional(map(string), {})
-      }))
+      storage_type                = optional(string, "OPENSEARCH_SERVERLESS")
 
       # Auto-created when storage_type = OPENSEARCH_SERVERLESS
       opensearch_serverless = optional(object({
@@ -56,24 +46,30 @@ variable "knowledge_base_config" {
         kms_key_arn            = optional(string)
         public_access          = optional(bool, true)
         data_access_principals = optional(list(string), [])
-        field_mapping = optional(object({
-          metadata_field = optional(string, "AMAZON_BEDROCK_METADATA")
-          text_field     = optional(string, "AMAZON_BEDROCK_TEXT_CHUNK")
-          vector_field   = optional(string, "bedrock-knowledge-base-default-vector")
-        }), {})
-        tags = optional(map(string), {})
-      }))
+        field_metadata         = optional(string, "AMAZON_BEDROCK_METADATA")
+        field_text             = optional(string, "AMAZON_BEDROCK_TEXT_CHUNK")
+        field_vector           = optional(string, "bedrock-knowledge-base-default-vector")
+        tags                   = optional(map(string), {})
+      }), {})
 
-      # Existing cluster — not auto-created
+      # Existing cluster — not auto-created; supply domain_arn, domain_endpoint, vector_index_name
       opensearch_managed_cluster = optional(object({
         domain_arn        = string
         domain_endpoint   = string
         vector_index_name = string
-        field_mapping = object({
-          metadata_field = string
-          text_field     = string
-          vector_field   = string
-        })
+        field_metadata    = optional(string, "AMAZON_BEDROCK_METADATA")
+        field_text        = optional(string, "AMAZON_BEDROCK_TEXT_CHUNK")
+        field_vector      = optional(string, "bedrock-knowledge-base-default-vector")
+      }))
+
+      # Auto-created when storage_type = S3_VECTORS
+      s3_vectors = optional(object({
+        vector_bucket_name = optional(string)
+        index_name         = optional(string)
+        data_type          = optional(string, "float32")
+        dimension          = number
+        distance_metric    = optional(string, "euclidean")
+        tags               = optional(map(string), {})
       }))
 
       # Auto-created when storage_type = RDS (Aurora PostgreSQL + pgvector)
@@ -90,13 +86,11 @@ variable "knowledge_base_config" {
         skip_final_snapshot        = optional(bool, true)
         allowed_cidr_blocks        = optional(list(string), [])
         allowed_security_group_ids = optional(list(string), [])
-        field_mapping = optional(object({
-          metadata_field    = optional(string, "metadata")
-          primary_key_field = optional(string, "id")
-          text_field        = optional(string, "chunks")
-          vector_field      = optional(string, "embedding")
-        }), {})
-        tags = optional(map(string), {})
+        field_metadata             = optional(string, "metadata")
+        field_primary_key          = optional(string, "id")
+        field_text                 = optional(string, "chunks")
+        field_vector               = optional(string, "embedding")
+        tags                       = optional(map(string), {})
       }))
     }))
 
