@@ -23,45 +23,53 @@ variable "create_knowledge_base" {
 variable "knowledge_base_config" {
   description = "Configuration object for the knowledge base module. Required when create_knowledge_base = true."
   type = object({
-    name                        = optional(string)
-    description                 = optional(string)
-    role_arn                    = string
-    region                      = optional(string)
-    tags                        = optional(map(string), {})
-    type                        = optional(string, "VECTOR")
-    embedding_model_arn         = optional(string)
-    vector_embedding_dimensions = optional(number)
-    vector_embedding_data_type  = optional(string)
-    supplemental_s3_uri         = optional(string)
-    kendra_index_arn            = optional(string)
-    vector_storage_type         = optional(string)
+    name        = optional(string)
+    description = optional(string)
+    role_arn    = string
+    region      = optional(string)
+    tags        = optional(map(string), {})
+    type        = optional(string, "VECTOR")
 
-    opensearch_serverless = optional(object({
-      collection_arn    = string
-      vector_index_name = string
-      field_mapping = object({
-        metadata_field = string
-        text_field     = string
-        vector_field   = string
-      })
+    # Required when type = VECTOR
+    vector_config = optional(object({
+      embedding_model_arn         = string
+      vector_embedding_dimensions = optional(number)
+      vector_embedding_data_type  = optional(string)
+      supplemental_s3_uri         = optional(string)
+      storage_type                = string
+
+      opensearch_serverless = optional(object({
+        collection_arn    = string
+        vector_index_name = string
+        field_mapping = object({
+          metadata_field = string
+          text_field     = string
+          vector_field   = string
+        })
+      }))
+
+      opensearch_managed_cluster = optional(object({
+        domain_arn        = string
+        domain_endpoint   = string
+        vector_index_name = string
+        field_mapping = object({
+          metadata_field = string
+          text_field     = string
+          vector_field   = string
+        })
+      }))
+
+      s3_vectors = optional(object({
+        index_arn         = optional(string)
+        index_name        = optional(string)
+        vector_bucket_arn = optional(string)
+      }), {})
     }))
 
-    opensearch_managed_cluster = optional(object({
-      domain_arn        = string
-      domain_endpoint   = string
-      vector_index_name = string
-      field_mapping = object({
-        metadata_field = string
-        text_field     = string
-        vector_field   = string
-      })
+    # Required when type = KENDRA
+    kendra_config = optional(object({
+      kendra_index_arn = string
     }))
-
-    s3_vectors = optional(object({
-      index_arn         = optional(string)
-      index_name        = optional(string)
-      vector_bucket_arn = optional(string)
-    }), {})
   })
   default = null
 }

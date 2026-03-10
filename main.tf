@@ -118,34 +118,9 @@ module "knowledge_base" {
   region      = try(var.knowledge_base_config.region, null)
   tags        = merge(local.common_tags, try(var.knowledge_base_config.tags, {}))
 
-  knowledge_base_type         = try(var.knowledge_base_config.type, "VECTOR")
-  embedding_model_arn         = try(var.knowledge_base_config.embedding_model_arn, null)
-  vector_embedding_dimensions = try(var.knowledge_base_config.vector_embedding_dimensions, null)
-  vector_embedding_data_type  = try(var.knowledge_base_config.vector_embedding_data_type, null)
-  supplemental_s3_uri         = try(var.knowledge_base_config.supplemental_s3_uri, null)
-  kendra_index_arn            = try(var.knowledge_base_config.kendra_index_arn, null)
-
-  vector_storage_type = try(var.knowledge_base_config.vector_storage_type, null)
-  opensearch_serverless = try(var.knowledge_base_config.opensearch_serverless, {
-    collection_arn    = ""
-    vector_index_name = ""
-    field_mapping = {
-      metadata_field = ""
-      text_field     = ""
-      vector_field   = ""
-    }
-  })
-  opensearch_managed_cluster = try(var.knowledge_base_config.opensearch_managed_cluster, {
-    domain_arn        = ""
-    domain_endpoint   = ""
-    vector_index_name = ""
-    field_mapping = {
-      metadata_field = ""
-      text_field     = ""
-      vector_field   = ""
-    }
-  })
-  s3_vectors = try(var.knowledge_base_config.s3_vectors, {})
+  knowledge_base_type = try(var.knowledge_base_config.type, "VECTOR")
+  vector_config       = try(var.knowledge_base_config.vector_config, null)
+  kendra_config       = try(var.knowledge_base_config.kendra_config, null)
 
   depends_on = [terraform_data.validations]
 }
