@@ -1,29 +1,13 @@
-output "id" {
-  description = "Prompt ID."
-  value       = aws_bedrockagent_prompt.this.id
-}
-
-output "arn" {
-  description = "Prompt ARN."
-  value       = aws_bedrockagent_prompt.this.arn
-}
-
-output "name" {
-  description = "Prompt name."
-  value       = aws_bedrockagent_prompt.this.name
-}
-
-output "version" {
-  description = "Prompt version (DRAFT on create)."
-  value       = aws_bedrockagent_prompt.this.version
-}
-
-output "created_at" {
-  description = "Timestamp when the prompt was created."
-  value       = aws_bedrockagent_prompt.this.created_at
-}
-
-output "updated_at" {
-  description = "Timestamp when the prompt was last updated."
-  value       = aws_bedrockagent_prompt.this.updated_at
+output "prompts" {
+  description = "Map of logical key → prompt attributes (id, arn, name, version, created_at, updated_at)."
+  value = {
+    for k, p in aws_bedrockagent_prompt.this : k => {
+      id         = p.id
+      arn        = p.arn
+      name       = p.name
+      version    = p.version
+      created_at = p.created_at
+      updated_at = p.updated_at
+    }
+  }
 }

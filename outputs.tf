@@ -13,48 +13,39 @@ output "knowledge_base_name" {
   value       = var.create_knowledge_base ? module.knowledge_base[0].name : null
 }
 
-output "prompt_id" {
-  description = "Prompt ID. Null when create_prompt_management = false."
-  value       = var.create_prompt_management ? module.prompt_management[0].id : null
+output "rds_cluster_arn" {
+  description = "Aurora cluster ARN. Null when storage_type != RDS."
+  value       = var.create_knowledge_base ? module.knowledge_base[0].rds_cluster_arn : null
 }
 
-output "prompt_arn" {
-  description = "Prompt ARN. Null when create_prompt_management = false."
-  value       = var.create_prompt_management ? module.prompt_management[0].arn : null
+output "rds_cluster_endpoint" {
+  description = "Aurora writer endpoint. Null when storage_type != RDS."
+  value       = var.create_knowledge_base ? module.knowledge_base[0].rds_cluster_endpoint : null
 }
 
-output "prompt_name" {
-  description = "Prompt name. Null when create_prompt_management = false."
-  value       = var.create_prompt_management ? module.prompt_management[0].name : null
+output "rds_secret_arn" {
+  description = "ARN of the Secrets Manager secret holding the Aurora master credentials. Null when storage_type != RDS."
+  value       = var.create_knowledge_base ? module.knowledge_base[0].rds_secret_arn : null
 }
 
-output "prompt_version" {
-  description = "Prompt version (DRAFT on create). Null when create_prompt_management = false."
-  value       = var.create_prompt_management ? module.prompt_management[0].version : null
+output "redshift_namespace_arn" {
+  description = "Redshift Serverless namespace ARN. Null when knowledge_base_type != SQL."
+  value       = var.create_knowledge_base ? module.knowledge_base[0].redshift_namespace_arn : null
 }
 
-output "prompt_bridge_prompt_id" {
-  description = "Resolved prompt ID for bridge consumers. Null when create_prompt_bridge = false."
-  value       = var.create_prompt_bridge ? local.prompt_bridge_prompt_id : null
+output "redshift_workgroup_endpoint" {
+  description = "Redshift Serverless workgroup endpoint address. Null when knowledge_base_type != SQL."
+  value       = var.create_knowledge_base ? module.knowledge_base[0].redshift_workgroup_endpoint : null
 }
 
-output "prompt_bridge_prompt_arn" {
-  description = "Resolved prompt ARN for bridge consumers. Null when create_prompt_bridge = false."
-  value       = var.create_prompt_bridge ? local.prompt_bridge_prompt_arn : null
+output "redshift_admin_secret_arn" {
+  description = "ARN of the Secrets Manager secret holding the Redshift admin credentials. Null when knowledge_base_type != SQL."
+  value       = var.create_knowledge_base ? module.knowledge_base[0].redshift_admin_secret_arn : null
 }
 
-output "prompt_bridge_prompt_version" {
-  description = "Resolved prompt version for bridge consumers. Null when create_prompt_bridge = false."
-  value       = var.create_prompt_bridge ? local.prompt_bridge_prompt_version : null
-}
-
-output "prompt_bridge_environment_variables" {
-  description = "Environment variable map for application runtimes (for example AgentCore containers) to consume Bedrock prompt references. Null when create_prompt_bridge = false."
-  value = var.create_prompt_bridge ? {
-    (try(var.prompt_bridge_config.env_var_names.prompt_id, "BEDROCK_PROMPT_ID"))           = local.prompt_bridge_prompt_id
-    (try(var.prompt_bridge_config.env_var_names.prompt_arn, "BEDROCK_PROMPT_ARN"))         = local.prompt_bridge_prompt_arn
-    (try(var.prompt_bridge_config.env_var_names.prompt_version, "BEDROCK_PROMPT_VERSION")) = local.prompt_bridge_prompt_version
-  } : null
+output "prompts" {
+  description = "Map of logical key → prompt attributes (id, arn, name, version, created_at, updated_at). Empty map when create_prompt_management = false."
+  value       = var.create_prompt_management ? module.prompt_management[0].prompts : {}
 }
 
 output "guardrail_id" {
@@ -75,4 +66,19 @@ output "guardrail_version" {
 output "guardrail_status" {
   description = "Guardrail status. Null when create_guardrail = false."
   value       = var.create_guardrail ? module.guardrail[0].status : null
+}
+
+output "agent_id" {
+  description = "Agent ID. Null when create_agent = false."
+  value       = var.create_agent ? module.agent[0].agent_id : null
+}
+
+output "agent_arn" {
+  description = "Agent ARN. Null when create_agent = false."
+  value       = var.create_agent ? module.agent[0].agent_arn : null
+}
+
+output "agent_aliases" {
+  description = "Map of alias key → alias attributes (agent_alias_id, agent_alias_arn). Empty map when create_agent = false."
+  value       = var.create_agent ? module.agent[0].aliases : {}
 }
