@@ -1,17 +1,18 @@
 provider "aws" {
-  region = "us-east-1"
+  region = var.aws_region
 }
 
 module "bedrock" {
   source = "../../"
 
-  name = "example-kendra-kb"
+  name = var.module_name
 
   create_knowledge_base = true
   knowledge_base_config = {
-    name             = "example-kendra-kb"
-    role_arn         = "arn:aws:iam::123456789012:role/bedrock-kb-role"
+    name             = var.knowledge_base_name
+    role_arn         = var.knowledge_base_role_arn
     type             = "KENDRA"
-    kendra_index_arn = "arn:aws:kendra:us-east-1:123456789012:index/example-index-id"
+    kendra_index_arn = var.kendra_index_arn
+    tags             = var.tags
   }
 }

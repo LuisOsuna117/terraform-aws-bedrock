@@ -56,3 +56,23 @@ output "prompt_bridge_environment_variables" {
     (try(var.prompt_bridge_config.env_var_names.prompt_version, "BEDROCK_PROMPT_VERSION")) = local.prompt_bridge_prompt_version
   } : null
 }
+
+output "guardrail_id" {
+  description = "Guardrail ID. Null when create_guardrail = false."
+  value       = var.create_guardrail ? module.guardrail[0].guardrail_id : null
+}
+
+output "guardrail_arn" {
+  description = "Guardrail ARN. Null when create_guardrail = false."
+  value       = var.create_guardrail ? module.guardrail[0].guardrail_arn : null
+}
+
+output "guardrail_version" {
+  description = "Guardrail version. Null when create_guardrail = false."
+  value       = var.create_guardrail ? module.guardrail[0].version : null
+}
+
+output "guardrail_status" {
+  description = "Guardrail status. Null when create_guardrail = false."
+  value       = var.create_guardrail ? module.guardrail[0].status : null
+}

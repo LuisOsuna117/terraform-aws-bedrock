@@ -1,24 +1,26 @@
 provider "aws" {
-  region = "us-east-1"
+  region = var.aws_region
 }
 
 module "bedrock" {
   source = "../../"
 
-  name = "example-s3-vectors-kb"
+  name = var.module_name
 
   create_knowledge_base = true
   knowledge_base_config = {
-    name                        = "example-s3-vectors-kb"
-    role_arn                    = "arn:aws:iam::123456789012:role/bedrock-kb-role"
+    name                        = var.knowledge_base_name
+    role_arn                    = var.knowledge_base_role_arn
     type                        = "VECTOR"
-    embedding_model_arn         = "arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v2:0"
-    vector_embedding_dimensions = 256
-    vector_embedding_data_type  = "FLOAT32"
+    embedding_model_arn         = var.embedding_model_arn
+    vector_embedding_dimensions = var.vector_embedding_dimensions
+    vector_embedding_data_type  = var.vector_embedding_data_type
     vector_storage_type         = "S3_VECTORS"
 
     s3_vectors = {
-      index_arn = "arn:aws:s3vectors:us-east-1:123456789012:bucket/example-vector-bucket/index/example-index"
+      index_arn = var.s3_vectors_index_arn
     }
+
+    tags = var.tags
   }
 }

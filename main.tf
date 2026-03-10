@@ -9,6 +9,7 @@ locals {
 
   knowledge_base_name = coalesce(try(var.knowledge_base_config.name, null), var.name)
   prompt_name         = coalesce(try(var.prompt_management_config.name, null), "${var.name}-prompt")
+  guardrail_name      = coalesce(try(var.guardrail_config.name, null), var.name)
 
   prompt_bridge_prompt_arn = coalesce(
     try(var.prompt_bridge_config.existing_prompt_arn, null),
@@ -50,8 +51,25 @@ resource "terraform_data" "validations" {
     }
 
     precondition {
-      condition     = !var.create_prompt_bridge || local.prompt_bridge_prompt_id != null
+      condition = !var.create_prompt_bridge || (
+        var.create_prompt_management || try(trimspace(var.prompt_bridge_config.existing_prompt_id) != "", false)
+      )
       error_message = "Prompt bridge requires a prompt ID. Set create_prompt_management = true or provide prompt_bridge_config.existing_prompt_id."
+    }
+
+    precondition {
+      condition     = !var.create_guardrail || var.guardrail_config != null
+      error_message = "guardrail_config must be provided when create_guardrail = true."
+    }
+
+    precondition {
+      condition     = !var.create_guardrail || try(trimspace(var.guardrail_config.blocked_input_messaging) != "", false)
+      error_message = "guardrail_config.blocked_input_messaging must be set when create_guardrail = true."
+    }
+
+    precondition {
+      condition     = !var.create_guardrail || try(trimspace(var.guardrail_config.blocked_outputs_messaging) != "", false)
+      error_message = "guardrail_config.blocked_outputs_messaging must be set when create_guardrail = true."
     }
   }
 }
@@ -109,6 +127,28 @@ module "prompt_management" {
   region                      = try(var.prompt_management_config.region, null)
   tags                        = merge(local.common_tags, try(var.prompt_management_config.tags, {}))
   variants                    = try(var.prompt_management_config.variants, [])
+
+  depends_on = [terraform_data.validations]
+}
+
+module "guardrail" {
+  count  = var.create_guardrail ? 1 : 0
+  source = "./modules/guardrail"
+
+  name                      = local.guardrail_name
+  blocked_input_messaging   = var.guardrail_config.blocked_input_messaging
+  blocked_outputs_messaging = var.guardrail_config.blocked_outputs_messaging
+  description               = try(var.guardrail_config.description, null)
+  kms_key_arn               = try(var.guardrail_config.kms_key_arn, null)
+  region                    = try(var.guardrail_config.region, null)
+  tags                      = merge(local.common_tags, try(var.guardrail_config.tags, {}))
+
+  content_policy_config               = try(var.guardrail_config.content_policy_config, null)
+  contextual_grounding_policy_config  = try(var.guardrail_config.contextual_grounding_policy_config, null)
+  cross_region_config                 = try(var.guardrail_config.cross_region_config, null)
+  sensitive_information_policy_config = try(var.guardrail_config.sensitive_information_policy_config, null)
+  topic_policy_config                 = try(var.guardrail_config.topic_policy_config, null)
+  word_policy_config                  = try(var.guardrail_config.word_policy_config, null)
 
   depends_on = [terraform_data.validations]
 }
