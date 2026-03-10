@@ -116,34 +116,31 @@ jobs:
           cache: true
 
       - name: Run Trivy (IaC)
-        uses: aquasecurity/trivy-action@0.35.0
+        shell: bash
         env:
           TRIVY_SKIP_CHECK_UPDATE: "true"
-        with:
-          scan-type: config
-          scan-ref: .
-          skip-setup-trivy: true
-          exit-code: "1"           # fail the job if CRITICAL/HIGH findings exist
-          severity: CRITICAL,HIGH
-          format: table
-          trivy-config: trivy.yaml
-          trivyignores: .trivyignore
+        run: |
+          trivy config \
+            --exit-code 1 \
+            --severity CRITICAL,HIGH \
+            --config trivy.yaml \
+            --ignorefile .trivyignore \
+            .
 
       - name: Run Trivy (IaC) — emit SARIF
         if: always()
-        uses: aquasecurity/trivy-action@0.35.0
+        shell: bash
         env:
           TRIVY_SKIP_CHECK_UPDATE: "true"
-        with:
-          scan-type: config
-          scan-ref: .
-          skip-setup-trivy: true
-          exit-code: "0"           # never block — SARIF upload is informational
-          severity: CRITICAL,HIGH
-          format: sarif
-          output: trivy-results.sarif
-          trivy-config: trivy.yaml
-          trivyignores: .trivyignore
+        run: |
+          trivy config \
+            --exit-code 0 \
+            --severity CRITICAL,HIGH \
+            --format sarif \
+            --output trivy-results.sarif \
+            --config trivy.yaml \
+            --ignorefile .trivyignore \
+            .
 
       - name: Upload SARIF to GitHub Code Scanning
         if: always() && hashFiles('trivy-results.sarif') != ''
