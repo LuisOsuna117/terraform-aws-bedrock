@@ -1,84 +1,94 @@
-output "knowledge_base_id" {
-  description = "Knowledge base ID. Null when create_knowledge_base = false."
-  value       = var.create_knowledge_base ? module.knowledge_base[0].id : null
+output "knowledge_base_arn" {
+  description = "ARN of the Bedrock knowledge base. Null when create_knowledge_base = false."
+  value       = try(module.knowledge_base[0].knowledge_base_arn, null)
 }
 
-output "knowledge_base_arn" {
-  description = "Knowledge base ARN. Null when create_knowledge_base = false."
-  value       = var.create_knowledge_base ? module.knowledge_base[0].arn : null
+output "knowledge_base_id" {
+  description = "ID of the Bedrock knowledge base. Null when create_knowledge_base = false."
+  value       = try(module.knowledge_base[0].knowledge_base_id, null)
 }
 
 output "knowledge_base_name" {
-  description = "Knowledge base name. Null when create_knowledge_base = false."
-  value       = var.create_knowledge_base ? module.knowledge_base[0].name : null
+  description = "Name of the Bedrock knowledge base. Null when create_knowledge_base = false."
+  value       = try(module.knowledge_base[0].knowledge_base_name, null)
 }
 
-output "rds_cluster_arn" {
-  description = "Aurora cluster ARN. Null when storage_type != RDS."
-  value       = var.create_knowledge_base ? module.knowledge_base[0].rds_cluster_arn : null
+output "knowledge_base_role_arn" {
+  description = "Role ARN used by the Bedrock knowledge base. Null when create_knowledge_base = false."
+  value       = try(module.knowledge_base[0].knowledge_base_role_arn, null)
 }
 
-output "rds_cluster_endpoint" {
-  description = "Aurora writer endpoint. Null when storage_type != RDS."
-  value       = var.create_knowledge_base ? module.knowledge_base[0].rds_cluster_endpoint : null
+output "knowledge_base_embedding_model_arn" {
+  description = "Embedding model ARN used by the Bedrock knowledge base. Null when create_knowledge_base = false."
+  value       = try(module.knowledge_base[0].embedding_model_arn, null)
 }
 
-output "rds_secret_arn" {
-  description = "ARN of the Secrets Manager secret holding the Aurora master credentials. Null when storage_type != RDS."
-  value       = var.create_knowledge_base ? module.knowledge_base[0].rds_secret_arn : null
+output "knowledge_base_vector_bucket_arn" {
+  description = "ARN of the S3 Vectors bucket backing the knowledge base. Null when create_knowledge_base = false."
+  value       = try(module.knowledge_base[0].vector_bucket_arn, null)
 }
 
-output "redshift_namespace_arn" {
-  description = "Redshift Serverless namespace ARN. Null when knowledge_base_type != SQL."
-  value       = var.create_knowledge_base ? module.knowledge_base[0].redshift_namespace_arn : null
+output "knowledge_base_vector_bucket_name" {
+  description = "Name of the S3 Vectors bucket backing the knowledge base. Null when create_knowledge_base = false."
+  value       = try(module.knowledge_base[0].vector_bucket_name, null)
 }
 
-output "redshift_workgroup_endpoint" {
-  description = "Redshift Serverless workgroup endpoint address. Null when knowledge_base_type != SQL."
-  value       = var.create_knowledge_base ? module.knowledge_base[0].redshift_workgroup_endpoint : null
+output "knowledge_base_vector_index_arn" {
+  description = "ARN of the S3 Vectors index backing the knowledge base. Null when create_knowledge_base = false."
+  value       = try(module.knowledge_base[0].vector_index_arn, null)
 }
 
-output "redshift_admin_secret_arn" {
-  description = "ARN of the Secrets Manager secret holding the Redshift admin credentials. Null when knowledge_base_type != SQL."
-  value       = var.create_knowledge_base ? module.knowledge_base[0].redshift_admin_secret_arn : null
+output "knowledge_base_vector_index_name" {
+  description = "Name of the S3 Vectors index backing the knowledge base. Null when create_knowledge_base = false."
+  value       = try(module.knowledge_base[0].vector_index_name, null)
 }
 
-output "prompts" {
-  description = "Map of logical key → prompt attributes (id, arn, name, version, created_at, updated_at). Empty map when create_prompt_management = false."
-  value       = var.create_prompt_management ? module.prompt_management[0].prompts : {}
+output "knowledge_base_vector_dimension" {
+  description = "Vector dimension configured for the knowledge base. Null when create_knowledge_base = false."
+  value       = try(module.knowledge_base[0].vector_dimension, null)
+}
+
+output "knowledge_base_distance_metric" {
+  description = "Distance metric configured for the knowledge base S3 Vectors index. Null when create_knowledge_base = false."
+  value       = try(module.knowledge_base[0].distance_metric, null)
+}
+
+output "knowledge_base_managed_role_arn" {
+  description = "ARN of the managed IAM role created by the knowledge base submodule. Null when no managed role is created."
+  value       = try(module.knowledge_base[0].iam_role_arn, null)
+}
+
+output "knowledge_base_managed_role_name" {
+  description = "Name of the managed IAM role created by the knowledge base submodule. Null when no managed role is created."
+  value       = try(module.knowledge_base[0].iam_role_name, null)
 }
 
 output "guardrail_id" {
   description = "Guardrail ID. Null when create_guardrail = false."
-  value       = var.create_guardrail ? module.guardrail[0].guardrail_id : null
+  value       = try(module.guardrail[0].guardrail_id, null)
 }
 
 output "guardrail_arn" {
   description = "Guardrail ARN. Null when create_guardrail = false."
-  value       = var.create_guardrail ? module.guardrail[0].guardrail_arn : null
-}
-
-output "guardrail_version" {
-  description = "Guardrail version. Null when create_guardrail = false."
-  value       = var.create_guardrail ? module.guardrail[0].version : null
+  value       = try(module.guardrail[0].guardrail_arn, null)
 }
 
 output "guardrail_status" {
   description = "Guardrail status. Null when create_guardrail = false."
-  value       = var.create_guardrail ? module.guardrail[0].status : null
+  value       = try(module.guardrail[0].status, null)
 }
 
-output "agent_id" {
-  description = "Agent ID. Null when create_agent = false."
-  value       = var.create_agent ? module.agent[0].agent_id : null
+output "guardrail_draft_version" {
+  description = "Draft version reported by aws_bedrock_guardrail. Null when create_guardrail = false."
+  value       = try(module.guardrail[0].draft_version, null)
 }
 
-output "agent_arn" {
-  description = "Agent ARN. Null when create_agent = false."
-  value       = var.create_agent ? module.agent[0].agent_arn : null
+output "guardrail_published_version" {
+  description = "Published version created by aws_bedrock_guardrail_version. Null when no version is created."
+  value       = try(module.guardrail[0].published_version, null)
 }
 
-output "agent_aliases" {
-  description = "Map of alias key → alias attributes (agent_alias_id, agent_alias_arn). Empty map when create_agent = false."
-  value       = var.create_agent ? module.agent[0].aliases : {}
+output "guardrail_created_at" {
+  description = "Unix epoch timestamp in seconds for when the guardrail was created. Null when create_guardrail = false."
+  value       = try(module.guardrail[0].created_at, null)
 }

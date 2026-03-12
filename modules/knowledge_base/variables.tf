@@ -1,205 +1,207 @@
+variable "create" {
+  description = "Controls whether the module creates any resources."
+  type        = bool
+  default     = true
+}
+
 variable "name" {
   description = "Name of the Bedrock knowledge base."
   type        = string
+
+  validation {
+    condition     = length(trimspace(var.name)) > 0
+    error_message = "name must not be empty."
+  }
 }
 
 variable "description" {
-  description = "Optional description for the knowledge base."
-  type        = string
-  default     = null
-}
-
-variable "role_arn" {
-  description = "IAM role ARN used by the knowledge base."
-  type        = string
-}
-
-variable "region" {
-  description = "Optional region override for this resource."
+  description = "Optional description for the Bedrock knowledge base."
   type        = string
   default     = null
 }
 
 variable "tags" {
-  description = "Tags applied to the knowledge base resource."
+  description = "Tags applied to all managed resources. Resource-specific tags are merged on top of this map."
   type        = map(string)
   default     = {}
 }
 
-variable "knowledge_base_type" {
-  description = "Knowledge base type. Supported values: VECTOR, KENDRA, SQL."
+variable "create_role" {
+  description = "When true, create and manage the Bedrock knowledge base IAM role and inline policy."
+  type        = bool
+  default     = true
+}
+
+variable "create_vector_bucket" {
+  description = "When true, create the S3 Vectors vector bucket used by the knowledge base."
+  type        = bool
+  default     = true
+}
+
+variable "create_vector_index" {
+  description = "When true, create the S3 Vectors index used by the knowledge base."
+  type        = bool
+  default     = true
+}
+
+variable "role_arn" {
+  description = "Existing IAM role ARN to use when create_role = false."
   type        = string
-  default     = "VECTOR"
+  default     = null
 
   validation {
-    condition     = contains(["VECTOR", "KENDRA", "SQL"], var.knowledge_base_type)
-    error_message = "knowledge_base_type must be VECTOR, KENDRA, or SQL."
+    condition     = var.role_arn == null || can(regex("^arn:", var.role_arn))
+    error_message = "role_arn must be a valid ARN when set."
   }
 }
 
 variable "embedding_model_arn" {
-  description = "ARN of the Bedrock embedding model. Required when knowledge_base_type = VECTOR."
-  type        = string
-  default     = null
-}
-
-variable "vector_embedding_dimensions" {
-  description = "Optional dimensions override for the embedding model."
-  type        = number
-  default     = null
-}
-
-variable "vector_embedding_data_type" {
-  description = "Embedding data type: FLOAT32 or BINARY."
+  description = "Embedding model ARN for the vector knowledge base. Defaults to Amazon Titan Text Embeddings V2 in the current region."
   type        = string
   default     = null
 
   validation {
-    condition     = var.vector_embedding_data_type == null || contains(["FLOAT32", "BINARY"], var.vector_embedding_data_type)
-    error_message = "vector_embedding_data_type must be FLOAT32 or BINARY when set."
+    condition     = var.embedding_model_arn == null || can(regex("^arn:", var.embedding_model_arn))
+    error_message = "embedding_model_arn must be a valid ARN when set."
   }
 }
 
-variable "supplemental_s3_uri" {
-  description = "S3 URI for supplemental multimodal data storage."
+variable "supplemental_data_storage_s3_uri" {
+  description = "Optional S3 URI for supplemental multimodal data storage."
   type        = string
   default     = null
-}
-
-variable "storage_type" {
-  description = "Vector storage backend. One of: S3_VECTORS (default), OPENSEARCH_SERVERLESS, OPENSEARCH_MANAGED_CLUSTER, RDS."
-  type        = string
-  default     = "S3_VECTORS"
 
   validation {
-    condition     = contains(["OPENSEARCH_SERVERLESS", "OPENSEARCH_MANAGED_CLUSTER", "S3_VECTORS", "RDS"], var.storage_type)
-    error_message = "storage_type must be OPENSEARCH_SERVERLESS, OPENSEARCH_MANAGED_CLUSTER, S3_VECTORS, or RDS."
+    condition     = var.supplemental_data_storage_s3_uri == null || can(regex("^s3://", var.supplemental_data_storage_s3_uri))
+    error_message = "supplemental_data_storage_s3_uri must start with s3:// when set."
   }
 }
 
-variable "opensearch_serverless" {
-  description = <<-EOT
-    OpenSearch Serverless collection settings. Auto-created when storage_type = OPENSEARCH_SERVERLESS.
-    All fields are optional — defaults produce a working collection named after var.name.
-
-    collection_name, vector_index_name, description, kms_key_arn,
-    public_access, data_access_principals, tags,
-    field_metadata / field_text / field_vector  — Bedrock field name overrides
-  EOT
+variable "iam_role" {
+  description = "Advanced IAM role settings used when create_role = true."
   type = object({
-    collection_name        = optional(string)
-    vector_index_name      = optional(string)
-    description            = optional(string)
-    kms_key_arn            = optional(string)
-    public_access          = optional(bool, true)
-    data_access_principals = optional(list(string), [])
-    field_metadata         = optional(string, "AMAZON_BEDROCK_METADATA")
-    field_text             = optional(string, "AMAZON_BEDROCK_TEXT_CHUNK")
-    field_vector           = optional(string, "bedrock-knowledge-base-default-vector")
-    tags                   = optional(map(string), {})
+    name                 = optional(string)
+    description          = optional(string)
+    path                 = optional(string, "/")
+    permissions_boundary = optional(string)
+    max_session_duration = optional(number, 3600)
+    tags                 = optional(map(string), {})
   })
   default = {}
+
+  validation {
+    condition     = try(var.iam_role.permissions_boundary, null) == null || can(regex("^arn:", var.iam_role.permissions_boundary))
+    error_message = "iam_role.permissions_boundary must be a valid ARN when set."
+  }
+
+  validation {
+    condition     = try(var.iam_role.max_session_duration, 3600) >= 3600 && try(var.iam_role.max_session_duration, 3600) <= 43200
+    error_message = "iam_role.max_session_duration must be between 3600 and 43200 seconds."
+  }
 }
 
-variable "opensearch_managed_cluster" {
-  description = <<-EOT
-    Existing OpenSearch Managed Cluster settings. Used when storage_type = OPENSEARCH_MANAGED_CLUSTER.
-    The cluster is NOT auto-created; supply domain_arn, domain_endpoint, and vector_index_name.
-
-    field_metadata / field_text / field_vector  — optional Bedrock field name overrides
-  EOT
-  type = object({
-    domain_arn        = string
-    domain_endpoint   = string
-    vector_index_name = string
-    field_metadata    = optional(string, "AMAZON_BEDROCK_METADATA")
-    field_text        = optional(string, "AMAZON_BEDROCK_TEXT_CHUNK")
-    field_vector      = optional(string, "bedrock-knowledge-base-default-vector")
-  })
-  default = null
+variable "iam_role_additional_policy_documents" {
+  description = "Additional IAM policy documents, as JSON strings, merged into the managed inline policy. Useful for future data source permissions."
+  type        = list(string)
+  default     = []
 }
 
 variable "s3_vectors" {
-  description = <<-EOT
-    S3 Vectors bucket and index settings. Auto-created when storage_type = S3_VECTORS.
-
-    dimension (required), vector_bucket_name, index_name, data_type, distance_metric, tags
-  EOT
+  description = "S3 Vectors settings for the knowledge base. Common-path users typically only set dimension overrides here."
   type = object({
+    vector_bucket_arn  = optional(string)
     vector_bucket_name = optional(string)
+    index_arn          = optional(string)
     index_name         = optional(string)
+    dimension          = optional(number, 1024)
+    distance_metric    = optional(string, "cosine")
     data_type          = optional(string, "float32")
-    dimension          = number
-    distance_metric    = optional(string, "euclidean")
-    tags               = optional(map(string), {})
+    force_destroy      = optional(bool, false)
+    non_filterable_metadata_keys = optional(list(string), [
+      "AMAZON_BEDROCK_TEXT",
+      "AMAZON_BEDROCK_METADATA",
+    ])
+    bucket_encryption = optional(object({
+      sse_type    = optional(string, "AES256")
+      kms_key_arn = optional(string)
+    }))
+    index_encryption = optional(object({
+      sse_type    = optional(string, "AES256")
+      kms_key_arn = optional(string)
+    }))
+    tags = optional(map(string), {})
   })
-  default = null
+  default = {}
+
+  validation {
+    condition = (
+      try(var.s3_vectors.vector_bucket_arn, null) == null ||
+      can(regex("^arn:", var.s3_vectors.vector_bucket_arn))
+      ) && (
+      try(var.s3_vectors.index_arn, null) == null ||
+      can(regex("^arn:", var.s3_vectors.index_arn))
+    )
+    error_message = "s3_vectors.vector_bucket_arn and s3_vectors.index_arn must be valid ARNs when set."
+  }
+
+  validation {
+    condition     = try(var.s3_vectors.dimension, 1024) >= 1 && try(var.s3_vectors.dimension, 1024) <= 4096
+    error_message = "s3_vectors.dimension must be between 1 and 4096."
+  }
+
+  validation {
+    condition     = contains(["cosine", "euclidean"], lower(try(var.s3_vectors.distance_metric, "cosine")))
+    error_message = "s3_vectors.distance_metric must be one of: cosine, euclidean."
+  }
+
+  validation {
+    condition     = lower(try(var.s3_vectors.data_type, "float32")) == "float32"
+    error_message = "s3_vectors.data_type must be float32 for S3 Vectors."
+  }
+
+  validation {
+    condition = (
+      length(try(var.s3_vectors.non_filterable_metadata_keys, [])) <= 10 &&
+      length(distinct(try(var.s3_vectors.non_filterable_metadata_keys, []))) == length(try(var.s3_vectors.non_filterable_metadata_keys, [])) &&
+      alltrue([
+        for key in try(var.s3_vectors.non_filterable_metadata_keys, []) :
+        length(key) >= 1 && length(key) <= 63
+      ])
+    )
+    error_message = "s3_vectors.non_filterable_metadata_keys must contain at most 10 unique keys and each key must be 1-63 characters long."
+  }
+
+  validation {
+    condition = (
+      try(var.s3_vectors.bucket_encryption, null) == null ||
+      contains(["AES256", "aws:kms"], try(var.s3_vectors.bucket_encryption.sse_type, "AES256"))
+      ) && (
+      try(var.s3_vectors.index_encryption, null) == null ||
+      contains(["AES256", "aws:kms"], try(var.s3_vectors.index_encryption.sse_type, "AES256"))
+    )
+    error_message = "s3_vectors bucket and index encryption sse_type values must be AES256 or aws:kms."
+  }
+
+  validation {
+    condition = (
+      try(var.s3_vectors.bucket_encryption, null) == null ||
+      try(var.s3_vectors.bucket_encryption.sse_type, "AES256") != "aws:kms" ||
+      try(var.s3_vectors.bucket_encryption.kms_key_arn, null) != null
+      ) && (
+      try(var.s3_vectors.index_encryption, null) == null ||
+      try(var.s3_vectors.index_encryption.sse_type, "AES256") != "aws:kms" ||
+      try(var.s3_vectors.index_encryption.kms_key_arn, null) != null
+    )
+    error_message = "Provide kms_key_arn whenever a bucket or index encryption sse_type is aws:kms."
+  }
 }
 
-variable "rds" {
-  description = <<-EOT
-    Aurora PostgreSQL + pgvector settings. Auto-created when storage_type = RDS.
-
-    vpc_id, subnet_ids (required); cluster_identifier, engine_version, database_name,
-    master_username, table_name, min_capacity, max_capacity, skip_final_snapshot,
-    allowed_cidr_blocks, allowed_security_group_ids, tags,
-    field_metadata / field_text / field_vector / field_primary_key  — field name overrides
-  EOT
+variable "timeouts" {
+  description = "Optional create, update, and delete timeouts for aws_bedrockagent_knowledge_base."
   type = object({
-    vpc_id                          = string
-    subnet_ids                      = list(string)
-    cluster_identifier              = optional(string)
-    engine_version                  = optional(string, "16.4")
-    database_name                   = optional(string, "bedrock_kb")
-    master_username                 = optional(string, "bedrock")
-    table_name                      = optional(string, "bedrock_integration.bedrock_kb")
-    min_capacity                    = optional(number, 0.5)
-    max_capacity                    = optional(number, 4.0)
-    skip_final_snapshot             = optional(bool, true)
-    allowed_cidr_blocks             = optional(list(string), [])
-    allowed_security_group_ids      = optional(list(string), [])
-    allowed_egress_cidr_blocks      = optional(list(string), [])
-    kms_key_id                      = optional(string)
-    backup_retention_period         = optional(number, 7)
-    deletion_protection             = optional(bool, true)
-    performance_insights_enabled    = optional(bool, true)
-    performance_insights_kms_key_id = optional(string)
-    field_metadata                  = optional(string, "metadata")
-    field_primary_key               = optional(string, "id")
-    field_text                      = optional(string, "chunks")
-    field_vector                    = optional(string, "embedding")
-    tags                            = optional(map(string), {})
+    create = optional(string)
+    update = optional(string)
+    delete = optional(string)
   })
-  default = null
-}
-
-variable "kendra_index_arn" {
-  description = "Kendra index ARN. Required when knowledge_base_type = KENDRA."
-  type        = string
-  default     = null
-}
-
-variable "redshift" {
-  description = <<-EOT
-    Redshift Serverless settings. Auto-created when knowledge_base_type = SQL.
-
-    vpc_id, subnet_ids (required); namespace_name, workgroup_name, database_name,
-    admin_username, base_capacity, publicly_accessible,
-    allowed_cidr_blocks, allowed_security_group_ids, tags
-  EOT
-  type = object({
-    vpc_id                     = string
-    subnet_ids                 = list(string)
-    namespace_name             = optional(string)
-    workgroup_name             = optional(string)
-    database_name              = optional(string, "bedrock_kb")
-    admin_username             = optional(string, "admin")
-    base_capacity              = optional(number, 8)
-    publicly_accessible        = optional(bool, false)
-    allowed_cidr_blocks        = optional(list(string), [])
-    allowed_security_group_ids = optional(list(string), [])
-    allowed_egress_cidr_blocks = optional(list(string), [])
-    tags                       = optional(map(string), {})
-  })
-  default = null
+  default = {}
 }

@@ -1,87 +1,64 @@
-output "id" {
-  description = "Knowledge base ID."
-  value       = aws_bedrockagent_knowledge_base.this.id
+output "knowledge_base_arn" {
+  description = "ARN of the Bedrock knowledge base."
+  value       = try(aws_bedrockagent_knowledge_base.this[0].arn, null)
 }
 
-output "arn" {
-  description = "Knowledge base ARN."
-  value       = aws_bedrockagent_knowledge_base.this.arn
+output "knowledge_base_id" {
+  description = "ID of the Bedrock knowledge base."
+  value       = try(aws_bedrockagent_knowledge_base.this[0].id, null)
 }
 
-output "name" {
-  description = "Knowledge base name."
-  value       = aws_bedrockagent_knowledge_base.this.name
+output "knowledge_base_name" {
+  description = "Name of the Bedrock knowledge base."
+  value       = try(aws_bedrockagent_knowledge_base.this[0].name, null)
 }
 
-output "created_at" {
-  description = "Timestamp when the knowledge base was created."
-  value       = aws_bedrockagent_knowledge_base.this.created_at
+output "knowledge_base_role_arn" {
+  description = "IAM role ARN used by the Bedrock knowledge base."
+  value       = local.resolved_role_arn
 }
 
-output "updated_at" {
-  description = "Timestamp when the knowledge base was last updated."
-  value       = aws_bedrockagent_knowledge_base.this.updated_at
+output "embedding_model_arn" {
+  description = "Embedding model ARN used by the Bedrock knowledge base."
+  value       = local.resolved_embedding_model_arn
 }
 
-# ── S3 Vectors ────────────────────────────────────────────────────────────────
+output "vector_bucket_arn" {
+  description = "ARN of the S3 Vectors bucket backing the knowledge base."
+  value       = local.resolved_vector_bucket_arn
+}
 
 output "vector_bucket_name" {
-  description = "S3 Vectors bucket name. Null when storage_type != S3_VECTORS."
-  value       = length(aws_s3vectors_vector_bucket.this) > 0 ? aws_s3vectors_vector_bucket.this[0].vector_bucket_name : null
+  description = "Name of the S3 Vectors bucket backing the knowledge base."
+  value       = local.resolved_vector_bucket_name
 }
 
 output "vector_index_arn" {
-  description = "S3 Vectors index ARN. Null when storage_type != S3_VECTORS."
-  value       = length(aws_s3vectors_index.this) > 0 ? aws_s3vectors_index.this[0].index_arn : null
+  description = "ARN of the S3 Vectors index backing the knowledge base."
+  value       = local.resolved_vector_index_arn
 }
 
-# ── OpenSearch Serverless ─────────────────────────────────────────────────────
-
-output "opensearch_collection_arn" {
-  description = "OpenSearch Serverless collection ARN. Null when storage_type != OPENSEARCH_SERVERLESS."
-  value       = length(aws_opensearchserverless_collection.this) > 0 ? aws_opensearchserverless_collection.this[0].arn : null
+output "vector_index_name" {
+  description = "Name of the S3 Vectors index backing the knowledge base."
+  value       = local.resolved_vector_index_name
 }
 
-output "opensearch_collection_endpoint" {
-  description = "OpenSearch Serverless collection endpoint. Null when storage_type != OPENSEARCH_SERVERLESS."
-  value       = length(aws_opensearchserverless_collection.this) > 0 ? aws_opensearchserverless_collection.this[0].collection_endpoint : null
+output "vector_dimension" {
+  description = "Vector dimension configured for the knowledge base and S3 Vectors index."
+  value       = local.resolved_dimension
 }
 
-output "opensearch_index_name" {
-  description = "Name of the expected vector index inside the OpenSearch Serverless collection. Null when storage_type != OPENSEARCH_SERVERLESS."
-  value       = length(aws_opensearchserverless_collection.this) > 0 ? local.oss_index_name : null
+output "distance_metric" {
+  description = "Distance metric configured for the S3 Vectors index."
+  value       = local.resolved_distance_metric
 }
 
-# ── Aurora PostgreSQL ───────────────────────────────────────────────────────────
-
-output "rds_cluster_arn" {
-  description = "Aurora cluster ARN. Null when storage_type != RDS."
-  value       = length(aws_rds_cluster.this) > 0 ? aws_rds_cluster.this[0].arn : null
+output "iam_role_arn" {
+  description = "ARN of the managed IAM role. Null when create_role = false."
+  value       = try(aws_iam_role.this[0].arn, null)
 }
 
-output "rds_cluster_endpoint" {
-  description = "Aurora writer endpoint. Null when storage_type != RDS."
-  value       = length(aws_rds_cluster.this) > 0 ? aws_rds_cluster.this[0].endpoint : null
-}
-
-output "rds_secret_arn" {
-  description = "ARN of the Secrets Manager secret holding the Aurora master credentials. Null when storage_type != RDS."
-  value       = length(aws_rds_cluster.this) > 0 ? aws_rds_cluster.this[0].master_user_secret[0].secret_arn : null
-}
-
-# ── Redshift Serverless ─────────────────────────────────────────────────────
-
-output "redshift_namespace_arn" {
-  description = "Redshift Serverless namespace ARN. Null when knowledge_base_type != SQL."
-  value       = length(aws_redshiftserverless_namespace.this) > 0 ? aws_redshiftserverless_namespace.this[0].arn : null
-}
-
-output "redshift_workgroup_endpoint" {
-  description = "Redshift Serverless workgroup endpoint address. Null when knowledge_base_type != SQL."
-  value       = length(aws_redshiftserverless_workgroup.this) > 0 ? aws_redshiftserverless_workgroup.this[0].endpoint[0].address : null
-}
-
-output "redshift_admin_secret_arn" {
-  description = "ARN of the Secrets Manager secret holding the Redshift admin credentials. Null when knowledge_base_type != SQL."
-  value       = length(aws_redshiftserverless_namespace.this) > 0 ? aws_redshiftserverless_namespace.this[0].admin_password_secret_arn : null
+output "iam_role_name" {
+  description = "Name of the managed IAM role. Null when create_role = false."
+  value       = try(aws_iam_role.this[0].name, null)
 }

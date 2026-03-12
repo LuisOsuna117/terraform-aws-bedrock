@@ -1,152 +1,91 @@
 locals {
-  common_tags = merge(
-    {
-      Module    = "terraform-aws-bedrock"
-      ManagedBy = "Terraform"
-    },
+  effective_create_knowledge_base = var.create && var.create_knowledge_base
+  effective_create_guardrail      = var.create && var.create_guardrail
+  knowledge_base_name_override    = try(var.knowledge_base.name, null)
+  guardrail_name_override         = try(var.guardrail.name, null)
+
+  knowledge_base_name = local.knowledge_base_name_override != null && trimspace(local.knowledge_base_name_override) != "" ? local.knowledge_base_name_override : var.name
+
+  knowledge_base_tags = merge(
     var.tags,
+    try(var.knowledge_base.tags, {}),
   )
 
-  knowledge_base_name = coalesce(var.knowledge_base_name, var.name)
-  guardrail_name      = coalesce(try(var.guardrail_config.name, null), var.name)
-  agent_name          = coalesce(try(var.agent_config.name, null), var.name)
+  guardrail_name = local.guardrail_name_override != null && trimspace(local.guardrail_name_override) != "" ? local.guardrail_name_override : var.name
 
-  # Auto-wire the sibling guardrail module's ID to the agent unless explicitly overridden.
-  agent_guardrail_id = (
-    try(var.agent_config.guardrail_id, null) != null
-    ? var.agent_config.guardrail_id
-    : var.create_guardrail ? module.guardrail[0].guardrail_id : null
+  guardrail_tags = merge(
+    var.tags,
+    try(var.guardrail.tags, {}),
   )
 }
 
-resource "terraform_data" "validations" {
+resource "terraform_data" "validation" {
+  input = null
+
   lifecycle {
     precondition {
-      condition     = !var.create_knowledge_base || try(trimspace(var.knowledge_base_role_arn) != "", false)
-      error_message = "knowledge_base_role_arn must be set when create_knowledge_base = true."
+      condition     = !local.effective_create_knowledge_base || try(length(trimspace(local.knowledge_base_name)) > 0, false)
+      error_message = "Set name or knowledge_base.name when create_knowledge_base = true."
     }
 
     precondition {
-      condition     = !var.create_prompt_management || var.prompt_management_config != null
-      error_message = "prompt_management_config must be provided when create_prompt_management = true."
-    }
-
-    precondition {
-      condition     = !var.create_guardrail || var.guardrail_config != null
-      error_message = "guardrail_config must be provided when create_guardrail = true."
-    }
-
-    precondition {
-      condition     = !var.create_guardrail || try(trimspace(var.guardrail_config.blocked_input_messaging) != "", false)
-      error_message = "guardrail_config.blocked_input_messaging must be set when create_guardrail = true."
-    }
-
-    precondition {
-      condition     = !var.create_guardrail || try(trimspace(var.guardrail_config.blocked_outputs_messaging) != "", false)
-      error_message = "guardrail_config.blocked_outputs_messaging must be set when create_guardrail = true."
-    }
-
-    precondition {
-      condition     = !var.create_agent || var.agent_config != null
-      error_message = "agent_config must be provided when create_agent = true."
-    }
-
-    precondition {
-      condition     = !var.create_agent || try(trimspace(var.agent_config.role_arn) != "", false)
-      error_message = "agent_config.role_arn must be set when create_agent = true."
-    }
-
-    precondition {
-      condition     = !var.create_agent || try(trimspace(var.agent_config.foundation_model) != "", false)
-      error_message = "agent_config.foundation_model must be set when create_agent = true."
+      condition     = !local.effective_create_guardrail || try(length(trimspace(local.guardrail_name)) > 0, false)
+      error_message = "Set name or guardrail.name when create_guardrail = true."
     }
   }
 }
 
 module "knowledge_base" {
-  count  = var.create_knowledge_base ? 1 : 0
+  count  = local.effective_create_knowledge_base ? 1 : 0
   source = "./modules/knowledge_base"
 
-  name        = local.knowledge_base_name
-  description = var.knowledge_base_description
-  role_arn    = var.knowledge_base_role_arn
-  region      = var.knowledge_base_region
-  tags        = merge(local.common_tags, var.knowledge_base_tags)
+  create               = true
+  name                 = local.knowledge_base_name
+  description          = try(var.knowledge_base.description, null)
+  tags                 = local.knowledge_base_tags
+  create_role          = try(var.knowledge_base.create_role, true)
+  create_vector_bucket = try(var.knowledge_base.create_vector_bucket, true)
+  create_vector_index  = try(var.knowledge_base.create_vector_index, true)
+  role_arn             = try(var.knowledge_base.role_arn, null)
+  embedding_model_arn  = try(var.knowledge_base.embedding_model_arn, null)
 
-  knowledge_base_type         = var.knowledge_base_type
-  embedding_model_arn         = var.embedding_model_arn
-  vector_embedding_dimensions = var.vector_embedding_dimensions
-  vector_embedding_data_type  = var.vector_embedding_data_type
-  supplemental_s3_uri         = var.supplemental_s3_uri
-  storage_type                = var.storage_type
-  opensearch_serverless       = var.opensearch_serverless
-  opensearch_managed_cluster  = var.opensearch_managed_cluster
-  s3_vectors                  = var.s3_vectors
-  rds                         = var.rds
-  kendra_index_arn            = var.kendra_index_arn
-  redshift                    = var.redshift
+  supplemental_data_storage_s3_uri = try(var.knowledge_base.supplemental_data_storage_s3_uri, null)
+  iam_role                         = try(var.knowledge_base.iam_role, {})
+  iam_role_additional_policy_documents = try(
+    var.knowledge_base.iam_role_additional_policy_documents,
+    [],
+  )
+  s3_vectors = try(var.knowledge_base.s3_vectors, {})
+  timeouts   = try(var.knowledge_base.timeouts, {})
 
-  depends_on = [terraform_data.validations]
-}
-
-module "prompt_management" {
-  count  = var.create_prompt_management ? 1 : 0
-  source = "./modules/prompt_management"
-
-  tags    = merge(local.common_tags, try(var.prompt_management_config.tags, {}))
-  prompts = try(var.prompt_management_config.prompts, {})
-
-  depends_on = [terraform_data.validations]
+  depends_on = [terraform_data.validation]
 }
 
 module "guardrail" {
-  count  = var.create_guardrail ? 1 : 0
+  count  = local.effective_create_guardrail ? 1 : 0
   source = "./modules/guardrail"
 
+  create                    = true
+  create_version            = try(var.guardrail.create_version, false)
   name                      = local.guardrail_name
-  blocked_input_messaging   = var.guardrail_config.blocked_input_messaging
-  blocked_outputs_messaging = var.guardrail_config.blocked_outputs_messaging
-  description               = try(var.guardrail_config.description, null)
-  kms_key_arn               = try(var.guardrail_config.kms_key_arn, null)
-  region                    = try(var.guardrail_config.region, null)
-  tags                      = merge(local.common_tags, try(var.guardrail_config.tags, {}))
+  blocked_input_messaging   = try(var.guardrail.blocked_input_messaging, null)
+  blocked_outputs_messaging = try(var.guardrail.blocked_outputs_messaging, null)
+  description               = try(var.guardrail.description, null)
+  kms_key_arn               = try(var.guardrail.kms_key_arn, null)
+  tags                      = local.guardrail_tags
+  content_policy_config     = try(var.guardrail.content_policy_config, null)
+  contextual_grounding_policy_config = try(
+    var.guardrail.contextual_grounding_policy_config,
+    null,
+  )
+  cross_region_config                 = try(var.guardrail.cross_region_config, null)
+  sensitive_information_policy_config = try(var.guardrail.sensitive_information_policy_config, null)
+  topic_policy_config                 = try(var.guardrail.topic_policy_config, null)
+  word_policy_config                  = try(var.guardrail.word_policy_config, null)
+  version_description                 = try(var.guardrail.version_description, null)
+  version_skip_destroy                = try(var.guardrail.version_skip_destroy, false)
+  timeouts                            = try(var.guardrail.timeouts, {})
+  version_timeouts                    = try(var.guardrail.version_timeouts, {})
 
-  content_policy_config               = try(var.guardrail_config.content_policy_config, null)
-  contextual_grounding_policy_config  = try(var.guardrail_config.contextual_grounding_policy_config, null)
-  cross_region_config                 = try(var.guardrail_config.cross_region_config, null)
-  sensitive_information_policy_config = try(var.guardrail_config.sensitive_information_policy_config, null)
-  topic_policy_config                 = try(var.guardrail_config.topic_policy_config, null)
-  word_policy_config                  = try(var.guardrail_config.word_policy_config, null)
-
-  depends_on = [terraform_data.validations]
-}
-
-module "agent" {
-  count  = var.create_agent ? 1 : 0
-  source = "./modules/agent"
-
-  name             = local.agent_name
-  role_arn         = var.agent_config.role_arn
-  foundation_model = var.agent_config.foundation_model
-
-  instruction                 = try(var.agent_config.instruction, null)
-  description                 = try(var.agent_config.description, null)
-  idle_session_ttl_in_seconds = try(var.agent_config.idle_session_ttl_in_seconds, 600)
-  agent_collaboration         = try(var.agent_config.agent_collaboration, "DISABLED")
-  customer_encryption_key_arn = try(var.agent_config.customer_encryption_key_arn, null)
-  prepare_agent               = try(var.agent_config.prepare_agent, true)
-  skip_resource_in_use_check  = try(var.agent_config.skip_resource_in_use_check, false)
-  region                      = try(var.agent_config.region, null)
-  tags                        = merge(local.common_tags, try(var.agent_config.tags, {}))
-
-  guardrail_id      = local.agent_guardrail_id
-  guardrail_version = try(var.agent_config.guardrail_version, "DRAFT")
-
-  memory_configuration        = try(var.agent_config.memory_configuration, null)
-  action_groups               = try(var.agent_config.action_groups, {})
-  knowledge_base_associations = try(var.agent_config.knowledge_base_associations, {})
-  aliases                     = try(var.agent_config.aliases, {})
-  collaborators               = try(var.agent_config.collaborators, {})
-
-  depends_on = [terraform_data.validations]
+  depends_on = [terraform_data.validation]
 }
