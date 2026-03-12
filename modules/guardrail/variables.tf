@@ -1,16 +1,47 @@
+variable "create" {
+  description = "Controls whether the guardrail resource is created."
+  type        = bool
+  default     = true
+}
+
+variable "create_version" {
+  description = "When true, create a published Bedrock guardrail version."
+  type        = bool
+  default     = false
+}
+
 variable "name" {
   description = "Name of the Bedrock guardrail."
   type        = string
+  default     = null
+
+  validation {
+    condition     = var.name == null || length(trimspace(var.name)) > 0
+    error_message = "name must not be empty when set."
+  }
+}
+
+variable "guardrail_arn" {
+  description = "Existing guardrail ARN to use when create = false and create_version = true."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.guardrail_arn == null || can(regex("^arn:", var.guardrail_arn))
+    error_message = "guardrail_arn must be a valid ARN when set."
+  }
 }
 
 variable "blocked_input_messaging" {
   description = "Message returned when the guardrail blocks an input prompt."
   type        = string
+  default     = null
 }
 
 variable "blocked_outputs_messaging" {
   description = "Message returned when the guardrail blocks a model output."
   type        = string
+  default     = null
 }
 
 variable "description" {
@@ -23,12 +54,11 @@ variable "kms_key_arn" {
   description = "Optional KMS key ARN used to encrypt the guardrail at rest."
   type        = string
   default     = null
-}
 
-variable "region" {
-  description = "Optional region override for this resource."
-  type        = string
-  default     = null
+  validation {
+    condition     = var.kms_key_arn == null || can(regex("^arn:", var.kms_key_arn))
+    error_message = "kms_key_arn must be a valid ARN when set."
+  }
 }
 
 variable "tags" {
@@ -137,4 +167,35 @@ variable "word_policy_config" {
     })), [])
   })
   default = null
+}
+
+variable "version_description" {
+  description = "Optional description for the published guardrail version."
+  type        = string
+  default     = null
+}
+
+variable "version_skip_destroy" {
+  description = "Whether to retain the published guardrail version on destroy."
+  type        = bool
+  default     = false
+}
+
+variable "timeouts" {
+  description = "Optional create, update, and delete timeouts for aws_bedrock_guardrail."
+  type = object({
+    create = optional(string)
+    update = optional(string)
+    delete = optional(string)
+  })
+  default = {}
+}
+
+variable "version_timeouts" {
+  description = "Optional create and delete timeouts for aws_bedrock_guardrail_version."
+  type = object({
+    create = optional(string)
+    delete = optional(string)
+  })
+  default = {}
 }
