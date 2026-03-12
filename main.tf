@@ -1,21 +1,17 @@
 locals {
   effective_create_knowledge_base = var.create && var.create_knowledge_base
   effective_create_guardrail      = var.create && var.create_guardrail
+  knowledge_base_name_override    = try(var.knowledge_base.name, null)
+  guardrail_name_override         = try(var.guardrail.name, null)
 
-  knowledge_base_name = coalesce(
-    try(var.knowledge_base.name, null),
-    var.name,
-  )
+  knowledge_base_name = local.knowledge_base_name_override != null && trimspace(local.knowledge_base_name_override) != "" ? local.knowledge_base_name_override : var.name
 
   knowledge_base_tags = merge(
     var.tags,
     try(var.knowledge_base.tags, {}),
   )
 
-  guardrail_name = coalesce(
-    try(var.guardrail.name, null),
-    var.name,
-  )
+  guardrail_name = local.guardrail_name_override != null && trimspace(local.guardrail_name_override) != "" ? local.guardrail_name_override : var.name
 
   guardrail_tags = merge(
     var.tags,
