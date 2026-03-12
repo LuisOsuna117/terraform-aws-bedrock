@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.1](https://github.com/LuisOsuna117/terraform-aws-bedrock/compare/v0.1.0...v0.1.1) (2026-03-12)
+
+### 📖 Documentation
+
+* clean up changelog and remove buildspec ([d808f30](https://github.com/LuisOsuna117/terraform-aws-bedrock/commit/d808f3053034b487a1294a6270cc2d2a797e66d1))
+
 ## [0.1.0](https://github.com/LuisOsuna117/terraform-aws-bedrock/compare/v0.0.0...v0.1.0) (2026-03-12)
 
 ### 🚀 Features
